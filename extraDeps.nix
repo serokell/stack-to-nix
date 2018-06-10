@@ -15,11 +15,14 @@ let
       subdir = optionalString (repo ? subdir) "/${repo.subdir}";
     in self.callCabal2nix name "${src}${subdir}" {};
 
-in {
+in rec {
+  isHackageDep = builtins.isString;
+  isGitDep = spec: builtins.isAttrs spec && spec ? git;
+
   resolveExtraDep = self: super: name: spec:
-    if builtins.isString spec
+    if isHackageDep spec
     then resolveHackageDep self name spec
-    else if builtins.isAttrs spec && spec ? git
+    else if isGitDep spec
     then resolveGitDep self name spec
     else throw "Unsupport extra-dep specification";
 }

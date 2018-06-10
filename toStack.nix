@@ -1,6 +1,45 @@
 { pkgs }: proj:
 
 let
-  stack-def = proj;
+  inherit (builtins) concatLists concatStringsSep genList head tail;
+  inherit (pkgs.lib) attrValues flatten concatMap concatStrings mapAttrsToList optional singleton;
+  inherit (import ./extraDeps.nix { inherit pkgs; }) isGitDep isHackageDep;
 
-in pkgs.writeText (proj.name + "-stack.yaml") (builtins.toJSON stack-def)
+  indented = indentSize: lines:
+    let
+      indent = concatStrings (genList (_: " ") indentSize);
+    in map (l: indent + l) lines;
+
+  formatListItem = lines:
+    singleton ("- " + head lines) ++ indented 2 (tail lines);
+
+  formatList = name: items:
+    ["${name}:"] ++ (indented 2 (concatMap formatListItem items));
+
+  formatPackage = _: path: [ path ];
+
+  formatHackageDep = name: version:
+    [ "${name}-${version}" ];
+  formatGitDep = name: repo: [
+    "git: ${repo.git}"
+    "commit: ${repo.rev}"
+    ] ++ optional (repo ? subdir) ''subdirs: [ "${repo.subdir}" ]'';
+
+  formatExtraDep = name: spec: (
+    if isHackageDep spec
+    then formatHackageDep
+    else if isGitDep spec
+    then formatGitDep
+    else throw "Unsupport extra-dep specification"
+  ) name spec;
+
+in
+
+pkgs.writeText "stack.yaml" (concatStringsSep "\n" (flatten [
+    "resolver: ${proj.resolver}"
+    ""
+    (formatList "packages" (mapAttrsToList formatPackage proj.packages))
+    ""
+    (formatList "extra-deps" (mapAttrsToList formatExtraDep proj.extra-deps))
+    ""
+]))

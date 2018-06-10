@@ -29,7 +29,9 @@ let
   extra-deps = self: super:
     mapAttrs (resolveExtraDep self super) proj.extra-deps;
 
+  resolvePath = dir: path: builtins.toPath (dir + ("/" + path));
+  resolvedPackages = mapAttrs (_: resolvePath proj.dir) proj.packages;
   local-packages = self: super:
-    mapAttrs (name: path: callCabal2nix name path {}) proj.packages;
+    mapAttrs (name: path: callCabal2nix name path {}) resolvedPackages;
 
 in mapAttrs (name: _: getAttr name stackagePackages) proj.packages

@@ -34,12 +34,5 @@ in rec {
     inherit pkgs system config overrides;
   };
   buildYamlProject = dir:
-    let
-      resolvePath = path: builtins.toPath (dir + ("/" + path));
-
-      proj' = fromYaml "${dir}/project.yaml";
-      proj = proj' // {
-        packages = mapAttrs (_: resolvePath) proj'.packages;
-      };
-    in buildProject proj;
+    buildProject (fromYaml "${dir}/project.yaml" // { inherit dir; });
 }
