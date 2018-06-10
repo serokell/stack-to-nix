@@ -2,13 +2,11 @@
 , system ? builtins.currentSystem
 , config ? {}
 , overrides ? (_: _: {})
-, stackageOverlay ? import ((nixpkgs {}).fetchFromGitHub (import ./nixpkgs-stackage.nix))
 }:
 
 let
   pkgs = nixpkgs {
-    inherit system config;
-    overlays = [ stackageOverlay ];
+    inherit config system;
   };
 
   fromYaml = path:
@@ -31,7 +29,7 @@ in rec {
   toStack = import ./toStack.nix { inherit pkgs; };
 
   buildProject = import ./buildProject.nix {
-    inherit pkgs overrides;
+    inherit pkgs system config overrides;
   };
   buildYamlProject = dir:
     let
