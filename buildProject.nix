@@ -1,6 +1,16 @@
 { pkgs, system, config, overrides }: proj:
 
 let
+  extraDeps = import ./extraDeps.nix {
+    inherit pkgs;
+  };
+
+  inherit (builtins) getAttr;
+  inherit (pkgs.lib) composeExtensions mapAttrs;
+  inherit (import ./stackage.nix) fixResolverName;
+  inherit (stackagePackages) callHackage callCabal2nix;
+  inherit (extraDeps) resolveExtraDep;
+
   stackageSrc =
     if proj ? nixpkgs-stackage
     then proj.nixpkgs-stackage
@@ -11,20 +21,15 @@ let
     overlays = [ (import (fetchTarball stackageSrc)) ];
   };
 
-  extraDeps = import ./extraDeps.nix {
-    inherit pkgs;
-  };
-
-  inherit (import ./stackage.nix) fixResolverName;
-  inherit (stackagePackages) callHackage callCabal2nix;
-  inherit (extraDeps) resolveExtraDep;
-
   resolver = fixResolverName proj.resolver;
 
   stackagePackages = projPkgs.haskell.packages.stackage."${resolver}".override {
-    overrides = pkgs.lib.composeExtensions extra-deps overrides;
+    overrides = composeExtensions (composeExtensions extra-deps local-packages) overrides;
   };
   extra-deps = self: super:
-    pkgs.lib.mapAttrs (resolveExtraDep self super) proj.extra-deps;
+    mapAttrs (resolveExtraDep self super) proj.extra-deps;
 
-in callCabal2nix (proj.name) (proj.path) {}
+  local-packages = self: super:
+    mapAttrs (name: path: callCabal2nix name path {}) proj.packages;
+
+in mapAttrs (name: _: getAttr name stackagePackages) proj.packages

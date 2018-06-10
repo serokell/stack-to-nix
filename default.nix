@@ -9,6 +9,8 @@ let
     inherit config system;
   };
 
+  inherit (pkgs.lib) mapAttrs;
+
   fromYaml = path:
     let
       jsonDrv = pkgs.stdenvNoCC.mkDerivation rec {
@@ -33,6 +35,11 @@ in rec {
   };
   buildYamlProject = dir:
     let
-      proj = fromYaml "${dir}/project.yaml";
-    in buildProject (proj // { path = builtins.toPath (dir + ("/" + proj.path)); });
+      resolvePath = path: builtins.toPath (dir + ("/" + path));
+
+      proj' = fromYaml "${dir}/project.yaml";
+      proj = proj' // {
+        packages = mapAttrs (_: resolvePath) proj'.packages;
+      };
+    in buildProject proj;
 }
