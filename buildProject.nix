@@ -31,7 +31,14 @@ let
 
   resolvePath = dir: path: builtins.toPath (dir + ("/" + path));
   resolvedPackages = mapAttrs (_: resolvePath proj.dir) proj.packages;
+  mkLocalPackage = name: path:
+    let
+      # HACK: make it easier to build packages without a license yet
+      fakeLicense = pkg: pkg.overrideAttrs (old: {
+          meta = old.meta // { license = pkgs.lib.licenses.free; };
+      });
+    in fakeLicense (callCabal2nix name path {});
   local-packages = self: super:
-    mapAttrs (name: path: callCabal2nix name path {}) resolvedPackages;
+    mapAttrs mkLocalPackage resolvedPackages;
 
 in mapAttrs (name: _: getAttr name stackagePackages) proj.packages
