@@ -9,20 +9,14 @@ let
     inherit config system;
   };
 
-  inherit (pkgs.lib) mapAttrs;
+  inherit (pkgs.lib) importJSON mapAttrs;
 
   fromYaml = path:
     let
-      jsonDrv = pkgs.stdenvNoCC.mkDerivation rec {
-        name = "json-spec";
-        src = path;
+      jsonDrv = pkgs.runCommand "json-spec" {
         nativeBuildInputs = [ pkgs.yaml2json ];
-        phases = [ "buildPhase" ];
-        buildPhase = ''
-          yaml2json < "${src}" > "$out"
-        '';
-      };
-    in builtins.fromJSON (builtins.readFile jsonDrv);
+      } ''yaml2json < "${path}" > "$out"'';
+    in importJSON jsonDrv;
 
 in rec {
   inherit pkgs;
