@@ -29,7 +29,7 @@ let
   extra-deps = self: super:
     mapAttrs (resolveExtraDep self super) proj.extra-deps;
 
-  resolvePath = dir: path: builtins.toPath (dir + ("/" + path));
+  resolvePath = dir: path: dir + ("/" + path);
   resolvedPackages = mapAttrs (_: resolvePath proj.dir) proj.packages;
   mkLocalPackage = name: path:
     let
