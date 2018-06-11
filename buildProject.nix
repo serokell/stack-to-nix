@@ -29,8 +29,8 @@ let
   extra-deps = self: super:
     mapAttrs (resolveExtraDep self super) proj.extra-deps;
 
-  resolvePath = dir: path: dir + ("/" + path);
-  resolvedPackages = mapAttrs (_: resolvePath proj.dir) proj.packages;
+  resolvedPackages =
+    mapAttrs (_: path: proj.root + ("/" + path)) proj.packages;
   mkLocalPackage = name: path:
     let
       # HACK: make it easier to build packages without a license yet

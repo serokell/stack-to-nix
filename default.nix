@@ -33,6 +33,7 @@ in rec {
   buildProject = import ./buildProject.nix {
     inherit pkgs system config overrides;
   };
-  buildYamlProject = dir:
-    buildProject (fromYaml "${dir}/project.yaml" // { inherit dir; });
+  buildYamlProject = spec:
+    let root = spec + "/..";
+    in buildProject (fromYaml spec // { inherit root; });
 }
