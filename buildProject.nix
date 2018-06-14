@@ -6,7 +6,8 @@ let
   };
 
   inherit (builtins) getAttr;
-  inherit (pkgs.lib) composeExtensions mapAttrs;
+  inherit (pkgs.haskell.lib) dontCheck;
+  inherit (pkgs.lib) composeExtensions foldr mapAttrs;
   inherit (import ./stackage.nix) fixResolverName;
   inherit (stackagePackages) callHackage callCabal2nix;
   inherit (extraDeps) resolveExtraDep;
@@ -24,10 +25,17 @@ let
   resolver = fixResolverName proj.resolver;
 
   stackagePackages = projPkgs.haskell.packages.stackage."${resolver}".override {
-    overrides = composeExtensions (composeExtensions extra-deps local-packages) overrides;
+    overrides = foldr composeExtensions (_:_:{}) [
+      extra-deps
+      local-packages
+      overrides
+    ];
   };
+
+  resolveExtraDepNoCheck = self: super: name: spec:
+    dontCheck (resolveExtraDep self super name spec);
   extra-deps = self: super:
-    mapAttrs (resolveExtraDep self super) proj.extra-deps;
+    mapAttrs (resolveExtraDepNoCheck self super) proj.extra-deps;
 
   resolvedPackages =
     mapAttrs (_: path: proj.root + ("/" + path)) proj.packages;
