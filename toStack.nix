@@ -3,7 +3,7 @@
 let
   inherit (builtins) concatLists concatStringsSep genList head tail;
   inherit (pkgs.lib) attrValues flatten concatMap concatStrings mapAttrsToList optional singleton;
-  inherit (import ./extraDeps.nix { inherit pkgs; }) isGitDep isHackageDep;
+  inherit (import ./extraDeps.nix { inherit pkgs; }) caseDep;
 
   indented = indentSize: lines:
     let
@@ -25,13 +25,10 @@ let
     "commit: ${repo.rev}"
     ] ++ optional (repo ? subdir) ''subdirs: [ "${repo.subdir}" ]'';
 
-  formatExtraDep = name: spec: (
-    if isHackageDep spec
-    then formatHackageDep
-    else if isGitDep spec
-    then formatGitDep
-    else throw "Unsupport extra-dep specification"
-  ) name spec;
+  formatExtraDep = name: spec: caseDep spec {
+    hackage = formatHackageDep;
+    git = formatGitDep;
+  } name spec;
 
 in
 

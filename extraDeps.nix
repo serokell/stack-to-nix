@@ -19,10 +19,16 @@ in rec {
   isHackageDep = builtins.isString;
   isGitDep = spec: builtins.isAttrs spec && spec ? git;
 
-  resolveExtraDep = self: super: name: spec:
+  caseDep = spec: cases:
     if isHackageDep spec
-    then resolveHackageDep self name spec
+    then cases.hackage or (throw "Unhandled dep case: hackage")
     else if isGitDep spec
-    then resolveGitDep self name spec
-    else throw "Unsupport extra-dep specification";
+    then cases.git or (throw "Unhandled dep case: git")
+    else cases.unknown or throw "Unsupport extra-dep specification";
+
+  resolveExtraDep = self: super: name: spec:
+    caseDep spec {
+      hackage = resolveHackageDep;
+      git = resolveGitDep;
+    } self name spec;
 }
