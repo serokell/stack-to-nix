@@ -1,7 +1,8 @@
 { pkgs }:
 
 let
-  inherit (pkgs.lib) optionalString;
+  inherit (pkgs.lib) optionalString warn;
+  inherit (import ./prefetch.nix { inherit pkgs; }) prefetchSha256;
 
   resolveHackageDep = self: name: version:
     self.callHackage name version {};
@@ -14,6 +15,13 @@ let
       };
       subdir = optionalString (repo ? subdir) "/${repo.subdir}";
     in self.callCabal2nix name "${src}${subdir}" {};
+
+  ensureSha256Then = next: self: name: spec:
+    if spec ? sha256
+    then
+      next self name spec
+    else
+      warn "Extra dependency `${name}` is missing `sha256: ${prefetchSha256 name spec}`" throw;
 
 in rec {
   isHackageDep = builtins.isString;
@@ -29,6 +37,6 @@ in rec {
   resolveExtraDep = self: super: name: spec:
     caseDep spec {
       hackage = resolveHackageDep;
-      git = resolveGitDep;
+      git = ensureSha256Then resolveGitDep;
     } self name spec;
 }
