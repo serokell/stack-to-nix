@@ -3,6 +3,7 @@
 let
   inherit (pkgs.lib) optionalString warn;
   inherit (import ./prefetch.nix { inherit pkgs; }) prefetchSha256;
+  inherit (import ./upstream.nix { inherit pkgs; }) callCabal2nix;
 
   resolveHackageDep = self: name: version:
     self.callHackage name version {};
@@ -13,8 +14,8 @@ let
         url = repo.git;
         inherit (repo) rev sha256;
       };
-      subdir = optionalString (repo ? subdir) "/${repo.subdir}";
-    in self.callCabal2nix name "${src}${subdir}" {};
+      subdir = optionalString (repo ? subdir) ''--subpath="${repo.subdir}"'';
+    in callCabal2nix self name src {} subdir;
 
   ensureSha256Then = next: self: name: spec:
     if spec ? sha256
