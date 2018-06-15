@@ -49,4 +49,8 @@ let
   local-packages = self: super:
     mapAttrs mkLocalPackage resolvedPackages;
 
-in mapAttrs (name: _: getAttr name stackagePackages) proj.packages
+in {
+  inherit projPkgs;
+  haskellPackages = stackagePackages;
+  localPackages = mapAttrs (name: _: getAttr name stackagePackages) proj.packages;
+}

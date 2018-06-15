@@ -24,8 +24,10 @@ in rec {
   inherit fromYaml;
   toStack = import ./toStack.nix { inherit pkgs; };
 
-  buildNixProject = import ./buildProject.nix {
+  nixagePackages = import ./makePackages.nix {
     inherit pkgs system config overrides;
   };
+
+  buildNixProject = proj: (nixagePackages proj).localPackages;
   buildYamlProject = root: buildNixProject (fromYaml root);
 }
