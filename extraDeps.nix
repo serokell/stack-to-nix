@@ -39,5 +39,6 @@ in rec {
     caseDep spec {
       hackage = resolveHackageDep;
       git = ensureSha256Then resolveGitDep;
+      unknown = throw "Unsupported extra-dep specification for ${name}";
     } self name spec;
 }
