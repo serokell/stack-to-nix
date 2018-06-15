@@ -11,12 +11,12 @@ let
 
   inherit (pkgs.lib) importJSON mapAttrs;
 
-  fromYaml = path:
+  fromYaml = root:
     let
       jsonDrv = pkgs.runCommand "json-spec" {
         nativeBuildInputs = [ pkgs.yaml2json ];
-      } ''yaml2json < "${path}" > "$out"'';
-    in importJSON jsonDrv;
+      } ''yaml2json < "${root}/project.yaml" > "$out"'';
+    in importJSON jsonDrv // { inherit root; };
 
 in rec {
   inherit pkgs;
@@ -24,10 +24,8 @@ in rec {
   inherit fromYaml;
   toStack = import ./toStack.nix { inherit pkgs; };
 
-  buildProject = import ./buildProject.nix {
+  buildNixProject = import ./buildProject.nix {
     inherit pkgs system config overrides;
   };
-  buildYamlProject = spec:
-    let root = spec + "/..";
-    in buildProject (fromYaml spec // { inherit root; });
+  buildYamlProject = root: buildNixProject (fromYaml root);
 }
