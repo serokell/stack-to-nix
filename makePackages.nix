@@ -6,7 +6,7 @@ let
   };
 
   inherit (builtins) getAttr;
-  inherit (pkgs.haskell.lib) doCheck;
+  inherit (pkgs.haskell.lib) doCheck overrideCabal;
   inherit (pkgs.lib) cleanSource composeExtensions foldr mapAttrs;
   inherit (import ./stackage.nix) fixResolverName;
   inherit (stackagePackages) callHackage callCabal2nix;
@@ -45,8 +45,8 @@ let
   mkLocalPackage = name: path:
     let
       # HACK: make it easier to build packages without a license yet
-      fakeLicense = pkg: pkg.overrideAttrs (old: {
-          meta = old.meta // { license = pkgs.lib.licenses.free; };
+      fakeLicense = pkg: overrideCabal pkg (old: {
+        license = pkgs.lib.licenses.free;
       });
     in fakeLicense (doCheck (callCabal2nix name (cleanSource path) {}));
   local-packages = self: super:
