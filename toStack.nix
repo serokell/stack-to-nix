@@ -30,13 +30,24 @@ let
     git = formatGitDep;
   } name spec;
 
+  snapshot-name = "nixage-stack-snapshot";
+  snapshot = pkgs.writeText snapshot-name (concatStringsSep "\n" (flatten [
+    "name: ${snapshot-name}"
+    ""
+    "resolver: ${proj.resolver}"
+    ""
+    (formatList "packages" (mapAttrsToList formatExtraDep proj.extra-deps))
+    ""
+  ]));
+
 in
 
 pkgs.writeText "stack.yaml" (concatStringsSep "\n" (flatten [
-    "resolver: ${proj.resolver}"
+    "resolver: ${snapshot}"
     ""
     (formatList "packages" (mapAttrsToList formatPackage proj.packages))
     ""
-    (formatList "extra-deps" (mapAttrsToList formatExtraDep proj.extra-deps))
-    ""
+    "nix:"
+    "  enable: true"
+    "  shell-file: stack-shell.nix"
 ]))
