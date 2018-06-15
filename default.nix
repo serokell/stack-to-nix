@@ -28,6 +28,8 @@ in rec {
     inherit pkgs system config overrides;
   };
 
-  buildNixProject = proj: (nixagePackages proj).localPackages;
+  buildNixProject = proj:
+    let nixageProj = nixagePackages proj;
+    in nixageProj.localPackages // { inherit pkgs nixageProj; };
   buildYamlProject = root: buildNixProject (fromYaml root);
 }
