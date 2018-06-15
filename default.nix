@@ -30,6 +30,9 @@ in rec {
 
   buildNixProject = proj:
     let nixageProj = nixagePackages proj;
-    in nixageProj.localPackages // { inherit pkgs nixageProj; };
+    in nixageProj.localPackages // {
+      inherit pkgs nixageProj;
+      stack-yaml = toStack proj;
+    };
   buildYamlProject = root: buildNixProject (fromYaml root);
 }
