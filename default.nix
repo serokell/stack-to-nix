@@ -10,7 +10,7 @@ let
   };
 
   inherit (pkgs.lib) importJSON mapAttrs;
-  inherit (import ./prefetch.nix { inherit pkgs; }) ensureAllHaveHashes;
+  inherit (import ./prefetch.nix { inherit pkgs; }) prefetchAllIncomplete;
 
   fromYaml = root:
     let
@@ -31,10 +31,10 @@ in rec {
 
   buildNixProject = proj:
     let nixageProj = nixagePackages proj;
-    in nixageProj.localPackages // {
+    in nixageProj.target // {
       inherit pkgs nixageProj;
       stack-yaml = toStack proj;
-      ensure-hashes = ensureAllHaveHashes proj;
+      prefetch-incomplete = prefetchAllIncomplete proj;
     };
   buildYamlProject = root: buildNixProject (fromYaml root);
 }

@@ -3,7 +3,7 @@
 let
   inherit (builtins) concatLists concatStringsSep genList head tail;
   inherit (pkgs.lib) attrValues flatten concatMap concatStrings mapAttrsToList optional singleton;
-  inherit (import ./extraDeps.nix { inherit pkgs; }) caseDep;
+  inherit (import ./extraDeps { inherit pkgs; }) caseDep;
 
   indented = indentSize: lines:
     let

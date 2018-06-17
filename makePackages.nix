@@ -1,16 +1,14 @@
 { pkgs, system, config, overrides }: proj:
 
 let
-  extraDeps = import ./extraDeps.nix {
-    inherit pkgs;
-  };
-
   inherit (builtins) getAttr;
+  inherit (pkgs.lib)
+    any cleanSource composeExtensions foldr id mapAttrs mapAttrsToList warn;
   inherit (pkgs.haskell.lib) doCheck overrideCabal;
-  inherit (pkgs.lib) cleanSource composeExtensions foldr mapAttrs;
+
+  inherit (import ./extraDeps { inherit pkgs; }) depNeedsPrefetch resolveExtraDep;
+  inherit (import ./prefetch.nix { inherit pkgs; }) prefetchAllIncomplete;
   inherit (import ./stackage.nix) fixResolverName;
-  inherit (stackagePackages) callHackage callCabal2nix;
-  inherit (extraDeps) resolveExtraDep;
 
   stackageSrc =
     if proj ? nixpkgs-stackage
@@ -32,6 +30,7 @@ let
       overrides
     ];
   };
+  inherit (stackagePackages) callHackage callCabal2nix;
 
   doNotCheckDeps = self: super: {
     mkDerivation = drv: super.mkDerivation (drv // { doCheck = false; });
@@ -55,5 +54,8 @@ let
 in {
   inherit projPkgs;
   haskellPackages = stackagePackages;
-  localPackages = mapAttrs (name: _: getAttr name stackagePackages) proj.packages;
+  target =
+    if any id (mapAttrsToList depNeedsPrefetch proj.extra-deps)
+    then warn "Some dependencies are incomplete." (prefetchAllIncomplete proj)
+    else mapAttrs (name: _: getAttr name stackagePackages) proj.packages;
 }
