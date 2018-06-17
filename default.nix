@@ -10,6 +10,7 @@ let
   };
 
   inherit (pkgs.lib) importJSON mapAttrs;
+  inherit (import ./prefetch.nix { inherit pkgs; }) ensureAllHaveHashes;
 
   fromYaml = root:
     let
@@ -33,6 +34,7 @@ in rec {
     in nixageProj.localPackages // {
       inherit pkgs nixageProj;
       stack-yaml = toStack proj;
+      ensure-hashes = ensureAllHaveHashes proj;
     };
   buildYamlProject = root: buildNixProject (fromYaml root);
 }

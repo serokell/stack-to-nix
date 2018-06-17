@@ -2,7 +2,6 @@
 
 let
   inherit (pkgs.lib) optionalString warn;
-  inherit (import ./prefetch.nix { inherit pkgs; }) prefetchSha256;
   inherit (import ./upstream.nix { inherit pkgs; }) callCabal2nix;
 
   resolveHackageDep = self: name: version:
@@ -22,7 +21,7 @@ let
     then
       next self name spec
     else
-      warn "Extra dependency `${name}` is missing `sha256: ${prefetchSha256 name spec}`" throw;
+      warn "Extra dependency `${name}` does not have sha256" throw;
 
 in rec {
   isHackageDep = builtins.isString;
