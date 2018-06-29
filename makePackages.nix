@@ -1,4 +1,4 @@
-{ pkgs, system, config, overrides }: proj:
+{ pkgs, system, config, overrides, haskellOverrides }: proj:
 
 let
   inherit (builtins) getAttr;
@@ -17,7 +17,7 @@ let
 
   projPkgs = import (fetchTarball proj.nixpkgs) {
     inherit config system;
-    overlays = [ (import (fetchTarball stackageSrc)) ];
+    overlays = [ overrides (import (fetchTarball stackageSrc)) ];
   };
 
   resolver = fixResolverName proj.resolver;
@@ -27,7 +27,7 @@ let
       doNotCheckDeps
       extra-deps
       local-packages
-      overrides
+      haskellOverrides
     ];
   };
   inherit (stackagePackages) callHackage callCabal2nix;

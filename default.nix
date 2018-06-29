@@ -2,6 +2,7 @@
 , system ? builtins.currentSystem
 , config ? {}
 , overrides ? (_: _: {})
+, haskellOverrides ? (_: _: {})
 }:
 
 let
@@ -26,7 +27,7 @@ in rec {
   toStack = import ./toStack.nix { inherit pkgs; };
 
   nixagePackages = import ./makePackages.nix {
-    inherit pkgs system config overrides;
+    inherit pkgs system config overrides haskellOverrides;
   };
 
   buildNixProject = proj:
