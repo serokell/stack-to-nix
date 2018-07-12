@@ -4,10 +4,29 @@ let
   p = x.nixageProj;
 in p.haskellPackages.shellFor {
   packages = (_: pkgs.lib.attrValues p.target);
-  nativeBuildInputs = with pkgs.haskellPackages; [ cabal-install hpack ];
+  nativeBuildInputs = with pkgs.haskellPackages; [ cabal-install ];
 
   shellHook = ''
-    hpack
+    computeHash() {
+      ${pkgs.coreutils}/bin/sha1sum < package.yaml
+    }
+
+    hpack() {
+      ${pkgs.haskellPackages.hpack}/bin/hpack "$@"
+      packageHash=$(computeHash)
+    }
+
+    hpack --silent
+
+    checkHash() {
+      local curHash=$(computeHash)
+      if [[ "$curHash" != "$packageHash" ]]; then
+        echo ""
+        echo "$(tput setaf 1)$(tput bold)WARNING:$(tput sgr0) package.yaml has changed, please, restart the shell"
+      fi
+    }
+    export PROMPT_COMMAND="checkHash"
+
     echo "packages: ././" > cabal.project
   '';
 }
