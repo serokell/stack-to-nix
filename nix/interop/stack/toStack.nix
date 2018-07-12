@@ -1,20 +1,11 @@
 { pkgs }: proj:
 
 let
-  inherit (builtins) concatLists concatStringsSep genList head tail;
-  inherit (pkgs.lib) attrValues flatten concatMap concatStrings mapAttrsToList optional singleton;
-  inherit (import ./extraDeps { inherit pkgs; }) caseDep;
+  inherit (builtins) concatLists concatStringsSep;
+  inherit (pkgs.lib) attrValues flatten mapAttrsToList optional;
+  inherit (import ../../extraDeps { inherit pkgs; }) caseDep;
+  inherit (import ../../yaml.nix { inherit pkgs; }) format;
 
-  indented = indentSize: lines:
-    let
-      indent = concatStrings (genList (_: " ") indentSize);
-    in map (l: indent + l) lines;
-
-  formatListItem = lines:
-    singleton ("- " + head lines) ++ indented 2 (tail lines);
-
-  formatList = name: items:
-    ["${name}:"] ++ (indented 2 (concatMap formatListItem items));
 
   formatPackage = _: path: [ path ];
 
@@ -36,7 +27,7 @@ let
     ""
     "resolver: ${proj.resolver}"
     ""
-    (formatList "packages" (mapAttrsToList formatExtraDep proj.extra-deps))
+    (format.list "packages" (mapAttrsToList formatExtraDep proj.extra-deps))
     ""
   ]));
 
@@ -45,9 +36,10 @@ in
 pkgs.writeText "stack.yaml" (concatStringsSep "\n" (flatten [
     "resolver: ${snapshot}"
     ""
-    (formatList "packages" (mapAttrsToList formatPackage proj.packages))
+    (format.list "packages" (mapAttrsToList formatPackage proj.packages))
     ""
     "nix:"
     "  enable: true"
     "  shell-file: stack-shell.nix"
+    ""
 ]))
