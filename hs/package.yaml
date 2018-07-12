@@ -1,0 +1,35 @@
+name: nixage
+version: 0.0.0
+
+default-extensions:
+  - ApplicativeDo
+  - DeriveGeneric
+  - FlexibleContexts
+  - FlexibleInstances
+  - GeneralizedNewtypeDeriving
+  - LambdaCase
+  - NamedFieldPuns
+  - OverloadedStrings
+  - RankNTypes
+  - ScopedTypeVariables
+  - TemplateHaskell
+  - TupleSections
+  - TypeApplications
+  - TypeFamilies
+
+library:
+  source-dirs: lib
+
+  dependencies:
+    - base
+
+executables:
+  nixage:
+    source-dirs: cli
+    main: Main.hs
+
+    dependencies:
+      - base
+
+    ghc-options:
+      - -threaded

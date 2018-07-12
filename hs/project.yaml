@@ -1,0 +1,7 @@
+resolver: lts-11.14
+nixpkgs:
+  url: https://github.com/LnL7/nixpkgs/archive/edfb283c16be021fbba0306193eb0e421ba5553c.tar.gz
+  sha256: 1060wxybc4ngsib5vi90b3rmrrw6l3wpmz4mdi29c1qdlcbn463l
+
+packages:
+  nixage: .
