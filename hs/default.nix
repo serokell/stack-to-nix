@@ -1,12 +1,4 @@
 let
-  nixage = import ../nix {
-    overrides = self: super: {
-      gitAndTools = super.gitAndTools // {
-        git = super.gitAndTools.git.overrideAttrs (old: {
-          doInstallCheck = false;
-        });
-      };
-    };
-  };
+  nixage = import ../nix {};
 
 in nixage.buildYamlProject ./.
