@@ -27,6 +27,11 @@ in p.haskellPackages.shellFor {
     }
     export PROMPT_COMMAND="checkHash"
 
-    echo "packages: ././" > cabal.project
+    cat > cabal.project <<EOF
+packages: ././
+
+package nixage
+  ghc-options: -Wall -Wcompat
+EOF
   '';
 }

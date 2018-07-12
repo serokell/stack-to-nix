@@ -10,8 +10,10 @@ default-extensions:
   - LambdaCase
   - NamedFieldPuns
   - OverloadedStrings
+  - PatternSynonyms
   - RankNTypes
   - ScopedTypeVariables
+  - StandaloneDeriving
   - TemplateHaskell
   - TupleSections
   - TypeApplications
@@ -23,6 +25,9 @@ library:
   dependencies:
     - base
 
+    - containers
+    - text
+
 executables:
   nixage:
     source-dirs: cli
@@ -30,6 +35,9 @@ executables:
 
     dependencies:
       - base
+
+      - nixage
+
 
     ghc-options:
       - -threaded
