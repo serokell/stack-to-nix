@@ -3,7 +3,7 @@ let
   stackCmd = ''stack --internal-re-exec-version="${pkgs.stack.version}"'';
 
 in nixageProj.haskellPackages.shellFor {
-  packages = _: pkgs.lib.attrValues nixageProj.localPackages;
+  packages = _: pkgs.lib.attrValues nixageProj.target;
 
   nativeBuildInputs = [ pkgs.stack pkgs.git ];
   preferLocalBuild = true;
