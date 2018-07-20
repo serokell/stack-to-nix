@@ -43,11 +43,16 @@ let
     mapAttrs (_: path: proj.root + ("/" + path)) proj.packages;
   mkLocalPackage = name: path:
     let
-      # HACK: make it easier to build packages without a license yet
-      fakeLicense = pkg: overrideCabal pkg (old: {
+      drv = callCabal2nix name (cleanSource path) {};
+      cabalOverrides = {
+        doCheck = true;
+        # HACK: make it easier to build packages without a license yet
         license = pkgs.lib.licenses.free;
-      });
-    in fakeLicense (doCheck (callCabal2nix name (cleanSource path) {}));
+      };
+      derivationOverrides = {
+        strictDeps = true;
+      };
+    in (overrideCabal drv (_: cabalOverrides)).overrideDerivation (_: derivationOverrides);
   local-packages = self: super:
     mapAttrs mkLocalPackage resolvedPackages;
 
