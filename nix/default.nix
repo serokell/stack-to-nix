@@ -36,9 +36,10 @@ in rec {
 
     in
       nixageProj.target // {
-        inherit pkgs nixageProj;
-        stack-yaml = toStack proj;
-        prefetch-incomplete = prefetchAllIncomplete proj;
+        _pkgs = nixageProj.projPkgs;
+        _haskellPackages = nixageProj.haskellPackages;
+        _stack-yaml = toStack proj;
+        _prefetch-incomplete = prefetchAllIncomplete proj;
       };
   buildYamlProject = root: buildNixProject (fromYaml root);
 }
