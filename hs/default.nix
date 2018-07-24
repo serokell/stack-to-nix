@@ -1,3 +1,4 @@
+{}:
 let
   nixage = import ../nix {};
 

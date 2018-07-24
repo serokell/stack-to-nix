@@ -1,5 +1,5 @@
 let
-  x = import ./default.nix;
+  x = import ./default.nix {};
   pkgs = x.pkgs;
   p = x.nixageProj;
 in p.haskellPackages.shellFor {

@@ -9,6 +9,7 @@ default-extensions:
   - GeneralizedNewtypeDeriving
   - LambdaCase
   - NamedFieldPuns
+  - NoImplicitPrelude
   - OverloadedStrings
   - PatternSynonyms
   - RankNTypes
@@ -24,7 +25,10 @@ library:
 
   dependencies:
     - base
+    - universum
 
+    - aeson
+    - aeson-options
     - containers
     - text
 
@@ -35,9 +39,11 @@ executables:
 
     dependencies:
       - base
+      - universum
 
       - nixage
 
+      - yaml
 
     ghc-options:
       - -threaded
