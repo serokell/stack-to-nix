@@ -4,7 +4,7 @@ let
   inherit (builtins) getAttr;
   inherit (pkgs.lib)
     any cleanSource composeExtensions foldr id mapAttrs mapAttrsToList warn;
-  inherit (pkgs.haskell.lib) doCheck overrideCabal;
+  inherit (pkgs.haskell.lib) overrideCabal;
 
   inherit (import ./extraDeps { inherit pkgs; }) depNeedsPrefetch resolveExtraDep;
   inherit (import ./prefetch.nix { inherit pkgs; }) prefetchAllIncomplete;
@@ -24,7 +24,7 @@ let
 
   stackagePackages = projPkgs.haskell.packages.stackage."${resolver}".override {
     overrides = foldr composeExtensions (_:_:{}) [
-      doNotCheckDeps
+      speedupDeps
       extra-deps
       local-packages
       haskellOverrides
@@ -32,8 +32,11 @@ let
   };
   inherit (stackagePackages) callHackage callCabal2nix;
 
-  doNotCheckDeps = self: super: {
-    mkDerivation = drv: super.mkDerivation (drv // { doCheck = false; });
+  speedupDeps = self: super: {
+    mkDerivation = drv: super.mkDerivation (drv // {
+      doCheck = false;
+      doHaddock = false;
+    });
   };
 
   extra-deps = self: super:
@@ -46,13 +49,14 @@ let
       drv = callCabal2nix name (cleanSource path) {};
       cabalOverrides = {
         doCheck = true;
+        doHaddock = true;
         # HACK: make it easier to build packages without a license yet
         license = pkgs.lib.licenses.free;
       };
       derivationOverrides = {
         strictDeps = true;
       };
-    in (overrideCabal drv (_: cabalOverrides)).overrideDerivation (_: derivationOverrides);
+    in (overrideCabal drv (_: cabalOverrides)).overrideAttrs (_: derivationOverrides);
   local-packages = self: super:
     mapAttrs mkLocalPackage resolvedPackages;
 

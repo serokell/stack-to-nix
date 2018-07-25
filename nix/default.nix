@@ -14,32 +14,30 @@ let
   inherit (import ./prefetch.nix { inherit pkgs; }) prefetchAllIncomplete;
   inherit (import ./yaml.nix { inherit pkgs; }) importYaml;
 
-  fromYaml = root:
-    importYaml (root + "/project.yaml") // { inherit root; };
-
-in rec {
-  inherit pkgs;
-
-  inherit fromYaml;
-  toStack = import ./interop/stack/toStack.nix { inherit pkgs; };
-
   nixagePackages = import ./makePackages.nix {
     inherit pkgs system config overrides haskellOverrides;
   };
 
-  buildNixProject = proj':
+  toStack = import ./interop/stack/toStack.nix { inherit pkgs; };
+
+  makeNixageProj = proj': root:
     let
-      # Set defaults
-      proj = { extra-deps = {}; } // proj';
+      # Set defaults and root
+      proj = { extra-deps = {}; } // proj' // { inherit root; };
 
       nixageProj = nixagePackages proj;
-
     in
       nixageProj.target // {
         _pkgs = nixageProj.projPkgs;
         _haskellPackages = nixageProj.haskellPackages;
+        _target = nixageProj.target;
         _stack-yaml = toStack proj;
         _prefetch-incomplete = prefetchAllIncomplete proj;
       };
-  buildYamlProject = root: buildNixProject (fromYaml root);
+
+in {
+  inherit pkgs;
+
+  buildNixProject  = root: makeNixageProj (import (root + "/project.nix")) root;
+  buildYamlProject = root: makeNixageProj (importYaml (root + "/project.yaml")) root;
 }

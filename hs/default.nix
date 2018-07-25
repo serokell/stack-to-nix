@@ -1,3 +1,5 @@
+{}:
+
 let
   nixage = import ../nix {
     overrides = self: super: {

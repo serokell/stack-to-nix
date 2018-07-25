@@ -1,9 +1,9 @@
 let
-  inherit (import ./default.nix {}) pkgs nixageProj;
+  x = import ./default.nix {};
+  pkgs = x._pkgs;
   stackCmd = ''stack --internal-re-exec-version="${pkgs.stack.version}"'';
-
-in nixageProj.haskellPackages.shellFor {
-  packages = _: pkgs.lib.attrValues nixageProj.target;
+in x._haskellPackages.shellFor {
+  packages = _: pkgs.lib.attrValues x._target;
 
   nativeBuildInputs = [ pkgs.stack pkgs.git ];
   preferLocalBuild = true;
