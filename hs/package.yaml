@@ -9,9 +9,12 @@ default-extensions:
   - GeneralizedNewtypeDeriving
   - LambdaCase
   - NamedFieldPuns
+  - NoImplicitPrelude
   - OverloadedStrings
+  - PatternSynonyms
   - RankNTypes
   - ScopedTypeVariables
+  - StandaloneDeriving
   - TemplateHaskell
   - TupleSections
   - TypeApplications
@@ -22,6 +25,12 @@ library:
 
   dependencies:
     - base
+    - universum
+
+    - aeson
+    - aeson-options
+    - containers
+    - text
 
 executables:
   nixage:
@@ -30,6 +39,14 @@ executables:
 
     dependencies:
       - base
+      - universum
+
+      - nixage
+
+      - optparse-applicative
+      - process
+      - temporary
+      - yaml
 
     ghc-options:
       - -threaded
