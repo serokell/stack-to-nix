@@ -43,6 +43,9 @@ executables:
 
       - nixage
 
+      - optparse-applicative
+      - process
+      - temporary
       - yaml
 
     ghc-options:

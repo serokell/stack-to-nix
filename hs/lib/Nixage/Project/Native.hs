@@ -5,6 +5,7 @@ module Nixage.Project.Native
   , pNixpkgs
   , pStackage
   , pExtraDeps
+  , AstNixage
 
   , pattern HackageDepVersionNative
   , pattern SourceDepVersionNative

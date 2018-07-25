@@ -12,7 +12,6 @@ module Nixage.Project.Extensible
 
 import Universum
 
-import Data.Aeson (FromJSON)
 import Data.Map (Map)
 import Data.Text (Text)
 import GHC.Generics (Generic)

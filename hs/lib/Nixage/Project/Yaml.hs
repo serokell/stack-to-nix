@@ -8,16 +8,21 @@ module Nixage.Project.Yaml
 
   , pattern HackageDepVersionYaml
   , pattern SourceDepVersionYaml
+
+  , projectYamlToProjectNative
   ) where
 
 import Universum
 
-import Data.Aeson (FromJSON(..), Value(..), (.:), (.:?), (.!=))
+import Data.Aeson (FromJSON(..), Value(..), (.:), (.:?), (.!=), withObject)
 import Data.Map (Map)
 import Data.Text (Text)
 import Data.Void (Void)
 
 import Nixage.Project.Extensible
+import Nixage.Project.Native ( ProjectNative, pattern ProjectNative
+                             , pattern HackageDepVersionNative
+                             , pattern SourceDepVersionNative )
 import Nixage.Project.Types ( NixHash, NixpkgsVersion, StackageVersion
                             , PackageName, PackageVersion, ExternalSource(..))
 
@@ -66,12 +71,22 @@ instance FromJSON (ExtraDepVersion AstYaml) where
             GitSource
                 <$> v .: "git"
                 <*> v .: "rev"
+    parseJSON _ = fail "Invalid extra-dep specificatoin"
 
 instance FromJSON ProjectYaml where
-    parseJSON (Object v) =
+    parseJSON = withObject "Nixage project specification" $ \v ->
         ProjectYaml
             <$> v .:  "resolver"
             <*> v .:? "nixpkgs"
             <*> v .:? "stackage"
             <*> v .:  "packages"
             <*> v .:? "extra-deps" .!= mempty
+
+projectYamlToProjectNative :: ProjectYaml -> ProjectNative
+projectYamlToProjectNative (Project () r mnv msv ps eds) =
+    ProjectNative r mnv msv ps eds'
+  where
+    eds' = eds <&> \case
+      HackageDepVersion () v        -> HackageDepVersionNative v
+      SourceDepVersion () es nh msb -> SourceDepVersionNative es nh msb
+      XExtraDepVersion v            -> absurd v

@@ -6,14 +6,14 @@ module Nixage.Project.Types
 
     , PackageName
     , PackageVersion
-    , PackagePath
 
     , ExternalSource (..)
+
+    , NixageError(..)
     ) where
 
 import Universum
 
-import Data.Aeson (FromJSON, ToJSON, (.:))
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Text (Text)
@@ -47,9 +47,6 @@ type PackageName = Text
 -- | Version of a Haskell package
 type PackageVersion = Text
 
--- | Path to a Haskell package
-type PackagePath = Text
-
 
 -- | Description of a way to obtain the source of the package
 data ExternalSource
@@ -58,3 +55,11 @@ data ExternalSource
         , gsRev    :: Text
         }
   deriving (Eq, Generic, Show)
+
+data NixageError =
+      ProjectNativeToStackConfigError Text
+    | YamlDecodingError Text
+    deriving (Show, Typeable)
+
+instance Exception NixageError
+
