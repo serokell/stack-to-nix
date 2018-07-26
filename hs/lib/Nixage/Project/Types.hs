@@ -59,6 +59,7 @@ data ExternalSource
 data NixageError =
       ProjectNativeToStackConfigError Text
     | YamlDecodingError Text
+    | OtherError Text
     deriving (Show, Typeable)
 
 instance Exception NixageError

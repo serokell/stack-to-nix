@@ -1,44 +1,48 @@
 import Universum
 
 import Data.Yaml (decodeFileEither, encodeFile)
-import Options.Applicative ( Parser, info, fullDesc, progDesc, header
-                           , execParser, hsubparser, command
-                           , forwardOptions, strArgument, ParserInfo)
+import Options.Applicative ( info, fullDesc, progDesc, header
+                           , execParser, helper)
 import System.IO.Temp (withSystemTempFile, withTempFile)
 import System.Process (waitForProcess, createProcess, delegate_ctlc, proc)
 
-import Nixage.Project.Yaml (projectYamlToProjectNative)
+import Nixage.Project.Yaml (ProjectYaml, projectYamlToProjectNative)
 import Nixage.Project.Types (NixageError(..))
-import Nixage.Convert.Stack (writeStackConfig, projectNativeToStackConfig)
+import Nixage.Convert.Stack (createStackFiles, projectNativeToStackConfig, StackConfig)
+
+import Types
+import Parser
 
 main :: IO ()
-main = execParser (info nixageP infoMod) >>= \case
-    StackCmd args -> stackAction args
+main = execParser (info (helper <*> nixageP) infoMod) >>= \case
+    StackCmd stackArgs     -> stackAction stackArgs
+    ConvertCmd convertArgs -> convertAction convertArgs
   where
     infoMod = header "Nixage"
            <> progDesc "Build Haskell packages with Nix and Stackage"
            <> fullDesc
 
 
--- | * Nixage cli command type and parsers
+-- | * Nixage command actions
 
-data NixageCmd = StackCmd StackArgs
-type StackArgs = [Text]
+-- | read ProjectYaml from project.yaml
+readProjectYaml :: (MonadIO m, MonadThrow m) => FilePath -> m ProjectYaml
+readProjectYaml projectYamlPath =
+    liftIO (decodeFileEither projectYamlPath) >>= \case
+      Left err -> throwM $ YamlDecodingError (show err)
+      Right projectYaml -> return projectYaml
 
-nixageP :: Parser NixageCmd
-nixageP = hsubparser $
-    command "stack" stackPI
-
-stackPI :: ParserInfo NixageCmd
-stackPI = info (StackCmd <$> stackP)
-        $ progDesc "Stack command" <> forwardOptions
-
--- | Parse all arguments after 'stack' command as raw [Text]
-stackP :: Parser StackArgs
-stackP = many $ strArgument mempty
-
-
--- | * Stack command actions
+-- | Write stack and snapshot yaml files
+writeStackConfig :: (MonadIO m, MonadThrow m)
+                 => FilePath     -- ^ Stack yaml path
+                 -> FilePath     -- ^ Snapshot yaml path
+                 -> StackConfig
+                 -> m ()
+writeStackConfig stackPath snapshotPath stackConfig = do
+   let (snapshot, stack) = createStackFiles stackConfig snapshotPath
+   liftIO $ do
+       encodeFile snapshotPath snapshot
+       encodeFile stackPath stack
 
 -- | Create temporary '[standard-tmp-dir]/nixage-snapshot[rand-num].yaml'
 -- and './nixage-stack[rand-num].yaml', and run 'stack' on them.
@@ -51,11 +55,19 @@ stackAction args = do
         let stackConfig = projectNativeToStackConfig projectNative
         withSystemTempFile "nixage-stack-snapshot.yaml" $ \snapshotPath _ ->
           withTempFile "." "nixage-stack.yaml" $ \stackPath _ -> do
-            let (snapshot, stack) = writeStackConfig stackConfig snapshotPath
+            writeStackConfig stackPath snapshotPath stackConfig
             let  args' = ["--stack-yaml", toText stackPath] <> args
             liftIO $ do
-                encodeFile snapshotPath snapshot
-                encodeFile stackPath stack
                 (_,_,_,handle) <- createProcess $
-                    (proc "stack" (toString <$> args')) { delegate_ctlc = True }
+                     (proc "stack" (toString <$> args')) { delegate_ctlc = True }
                 void $ waitForProcess handle
+
+-- | Conversion between project specification formats.
+convertAction :: (MonadIO m, MonadThrow m) => ConvertArgs -> m ()
+convertAction (ConvertArgs convertIn convertOut) = do
+    projectNative <- case convertIn of
+      YamlConvertIn yamlPath -> projectYamlToProjectNative <$> readProjectYaml (toString yamlPath)
+    case convertOut of
+      StackConvertOut stackPath snapshotPath -> do
+        let stackConfig = projectNativeToStackConfig projectNative
+        writeStackConfig (toString stackPath) (toString snapshotPath) stackConfig

@@ -42,8 +42,9 @@ instance ToJSON StackCustomSnapshot where
                    , "subdirs" .= [fromMaybe "." subdir]
                    ]
 
-writeStackConfig :: StackConfig -> FilePath -> (Value, Value)
-writeStackConfig (StackConfig snapshot packages) snapshotPath =
+-- | Create stack and snapshot yaml files content
+createStackFiles :: StackConfig -> FilePath -> (Value, Value)
+createStackFiles (StackConfig snapshot packages) snapshotPath =
     (toJSON snapshot, stackYamlBuilder)
   where
     stackYamlBuilder = object
