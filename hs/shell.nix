@@ -1,9 +1,8 @@
 let
   x = import ./default.nix {};
-  pkgs = x.pkgs;
-  p = x.nixageProj;
-in p.haskellPackages.shellFor {
-  packages = (_: pkgs.lib.attrValues p.target);
+  pkgs = x._pkgs;
+in x._haskellPackages.shellFor {
+  packages = (_: pkgs.lib.attrValues x._target);
   nativeBuildInputs = with pkgs.haskellPackages; [ cabal-install ];
 
   shellHook = ''
