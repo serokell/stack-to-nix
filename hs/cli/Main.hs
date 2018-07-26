@@ -6,8 +6,8 @@ import Options.Applicative ( info, fullDesc, progDesc, header
 import System.IO.Temp (withSystemTempFile, withTempFile)
 import System.Process (waitForProcess, createProcess, delegate_ctlc, proc)
 
-import Nixage.Project.Yaml (ProjectYaml, projectYamlToProjectNative)
-import Nixage.Project.Types (NixageError(..))
+import Nixage.Project.Yaml (projectYamlToProjectNative, ProjectYaml)
+import Nixage.Project.Types (NixageException(..))
 import Nixage.Convert.Stack (createStackFiles, projectNativeToStackConfig, StackConfig)
 import Nixage.Convert.Nix (projectNativeToPrettyNix)
 
@@ -30,7 +30,7 @@ main = execParser (info (helper <*> nixageP) infoMod) >>= \case
 readProjectYaml :: (MonadIO m, MonadThrow m) => FilePath -> m ProjectYaml
 readProjectYaml projectYamlPath =
     liftIO (decodeFileEither projectYamlPath) >>= \case
-      Left err -> throwM $ YamlDecodingError (show err)
+      Left err -> throwM $ YamlDecodingException (show err)
       Right projectYaml -> return projectYaml
 
 -- | Write stack and snapshot yaml files
@@ -50,7 +50,7 @@ writeStackConfig stackPath snapshotPath stackConfig = do
 stackAction :: (MonadIO m, MonadThrow m, MonadMask m) => StackArgs-> m ()
 stackAction args = do
     liftIO (decodeFileEither "project.yaml") >>= \case
-      Left err -> throwM $ YamlDecodingError (show err)
+      Left err -> throwM $ YamlDecodingException (show err)
       Right projectYaml -> do
         let projectNative = projectYamlToProjectNative projectYaml
         let stackConfig = projectNativeToStackConfig projectNative

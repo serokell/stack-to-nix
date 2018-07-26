@@ -9,15 +9,16 @@ module Nixage.Project.Types
 
     , ExternalSource (..)
 
-    , NixageError(..)
+    , NixageException(..)
     ) where
 
-import Universum
+import Universum hiding (Show)
 
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Text (Text)
 import GHC.Generics (Generic)
+import GHC.Show (Show(..))
 
 
 -- | Hash used for nix source (currently sha256)
@@ -56,11 +57,21 @@ data ExternalSource
         }
   deriving (Eq, Generic, Show)
 
-data NixageError =
-      ProjectNativeToStackConfigError Text
-    | YamlDecodingError Text
-    | OtherError Text
-    deriving (Show, Typeable)
+data NixageException =
+      ProjectNativeToStackConfigException Text
+    | YamlDecodingException Text
+    | ProjectNativeToNixException Text
+    | ConvertException Text
+      deriving (Typeable)
 
-instance Exception NixageError
+instance Show NixageException where
+    show (ProjectNativeToStackConfigException t) =
+        "ProjectNativeToStackConfigException: " <> toString t
+    show (YamlDecodingException t) =
+        "YamlDecodingException: " <> toString t
+    show (ProjectNativeToNixException t) =
+        "ProjectNativeToNixException: " <> toString t
+    show (ConvertException t) =
+        "ConvertException: " <> toString t
 
+instance Exception NixageException
