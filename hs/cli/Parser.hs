@@ -3,11 +3,11 @@ module Parser where
 -- |  Nixage cli command parsers
 --
 import Universum
-import Options.Applicative ( Parser, info, fullDesc, progDesc, header
-                           , hsubparser, subparser, command
-                           , forwardOptions, strArgument, ParserInfo, Mod
-                           , CommandFields, optional, long, metavar, value
-                           , option, auto, helper, strOption, commandGroup)
+import Options.Applicative ( Parser, info, progDesc
+                           , hsubparser, command
+                           , forwardOptions, strArgument, Mod
+                           , CommandFields, optional, metavar
+                           , commandGroup)
 
 import Types
 

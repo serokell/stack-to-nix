@@ -19,4 +19,5 @@ data ConvertIn
 
 data ConvertOut
     = StackConvertOut Text Text
+    | NixConvertOut
     deriving (Show)

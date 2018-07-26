@@ -8,6 +8,7 @@ default-extensions:
   - FlexibleInstances
   - GeneralizedNewtypeDeriving
   - LambdaCase
+  - MultiParamTypeClasses
   - NamedFieldPuns
   - NoImplicitPrelude
   - OverloadedStrings
@@ -29,7 +30,9 @@ library:
 
     - aeson
     - aeson-options
+    - ansi-wl-pprint
     - containers
+    - hnix
     - text
 
 executables:

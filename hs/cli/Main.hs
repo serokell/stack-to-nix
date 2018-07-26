@@ -9,6 +9,7 @@ import System.Process (waitForProcess, createProcess, delegate_ctlc, proc)
 import Nixage.Project.Yaml (ProjectYaml, projectYamlToProjectNative)
 import Nixage.Project.Types (NixageError(..))
 import Nixage.Convert.Stack (createStackFiles, projectNativeToStackConfig, StackConfig)
+import Nixage.Convert.Nix (projectNativeToPrettyNix)
 
 import Types
 import Parser
@@ -71,3 +72,5 @@ convertAction (ConvertArgs convertIn convertOut) = do
       StackConvertOut stackPath snapshotPath -> do
         let stackConfig = projectNativeToStackConfig projectNative
         writeStackConfig (toString stackPath) (toString snapshotPath) stackConfig
+      NixConvertOut -> do
+          print $ projectNativeToPrettyNix projectNative

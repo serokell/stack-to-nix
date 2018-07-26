@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Nixage.Project.Native
   ( ProjectNative
   , pattern ProjectNative
@@ -11,15 +13,18 @@ module Nixage.Project.Native
   , pattern SourceDepVersionNative
   ) where
 
-import Universum
+import Universum hiding (toList)
 
-import Data.Map (Map)
+import Data.Map (Map, toList)
 import Data.Text (Text)
 import Data.Void (Void)
+import Nix.Convert (ToNix(..))
+import Nix.Expr.Shorthands (mkNonRecSet, mkStr, ($=), attrsE)
+import Nix.Expr.Types (NExpr)
 
 import Nixage.Project.Extensible
-import Nixage.Project.Types ( NixHash, NixpkgsVersion, StackageVersion
-                            , PackageName, PackageVersion, ExternalSource)
+import Nixage.Project.Types ( NixHash, NixpkgsVersion(..), StackageVersion(..)
+                            , PackageName, PackageVersion, ExternalSource(..))
 
 
 -- | Nixage native AST marker
@@ -56,3 +61,44 @@ pattern SourceDepVersionNative :: ExternalSource
                                -> Maybe FilePath
                                -> ExtraDepVersion AstNixage
 pattern SourceDepVersionNative es nh msd = SourceDepVersion () es nh msd
+
+
+instance Monad m => ToNix (ExtraDepVersion AstNixage) m NExpr where
+    toNix (HackageDepVersion () s) = return $ mkStr s
+    toNix (SourceDepVersion () (GitSource git rev) sha256 subdir) =
+        return $ mkNonRecSet $
+            [ "git" $= mkStr git
+            , "rev" $= mkStr rev
+            , "sha256" $= mkStr sha256
+            ]
+            <> maybeToList (("subdir" $=) . mkStr . toText <$> subdir)
+    toNix (XExtraDepVersion v) = absurd v
+
+instance Monad m => ToNix StackageVersion m NExpr where
+    toNix (StackageVersion url sha256) = return $ mkNonRecSet
+        [ "url" $= mkStr url
+        , "sha256" $= mkStr sha256
+        ]
+
+instance Monad m => ToNix NixpkgsVersion m NExpr where
+    toNix (NixpkgsVersion url sha256) = return $ mkNonRecSet
+        [ "url" $= mkStr url
+        , "sha256" $= mkStr sha256
+        ]
+
+instance Monad m => ToNix ProjectNative m NExpr where
+    toNix (Project () r mnv msv ps eds) = do
+        mnvExpr <- mapM toNix mnv
+        msvExpr <- mapM toNix msv
+        let packagesExpr = attrsE $ second (mkStr . toText) <$> toList ps
+        edsExpr <- attrsE <$> mapM (sequence . second toNix) (toList eds)
+
+        return $ mkNonRecSet $
+            [ "resolver" $= mkStr r
+            ]
+            <> maybeToList (("nixpkgs" $=) <$> mnvExpr)
+            <> maybeToList (("stackage" $=) <$> msvExpr)
+            <>
+            [ "packages" $= packagesExpr
+            , "extra-deps" $= edsExpr
+            ]
