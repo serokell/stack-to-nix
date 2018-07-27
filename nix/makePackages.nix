@@ -9,6 +9,7 @@ let
   inherit (import ./extraDeps { inherit pkgs; }) depNeedsPrefetch resolveExtraDep;
   inherit (import ./prefetch.nix { inherit pkgs; }) prefetchAllIncomplete;
   inherit (import ./stackage.nix) fixResolverName;
+  inherit (import ./upstream.nix { inherit pkgs; }) callCabal2nix;
 
   stackageSrc =
     if proj ? nixpkgs-stackage
@@ -30,7 +31,7 @@ let
       haskellOverrides
     ];
   };
-  inherit (stackagePackages) callHackage callCabal2nix;
+  inherit (stackagePackages) callHackage;
 
   speedupDeps = self: super: {
     mkDerivation = drv: super.mkDerivation (drv // {
@@ -42,11 +43,10 @@ let
   extra-deps = self: super:
     mapAttrs (resolveExtraDep self super) proj.extra-deps;
 
-  resolvedPackages =
-    mapAttrs (_: path: proj.root + ("/" + path)) proj.packages;
+  projectSrc = cleanSource proj.root;
   mkLocalPackage = name: path:
     let
-      drv = callCabal2nix name (cleanSource path) {};
+      drv = callCabal2nix stackagePackages name projectSrc {} ''--subpath="${path}"'';
       cabalOverrides = {
         doCheck = true;
         doHaddock = true;
@@ -58,7 +58,7 @@ let
       };
     in (overrideCabal drv (_: cabalOverrides)).overrideAttrs (_: derivationOverrides);
   local-packages = self: super:
-    mapAttrs mkLocalPackage resolvedPackages;
+    mapAttrs mkLocalPackage proj.packages;
 
 in {
   inherit projPkgs;
