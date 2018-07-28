@@ -46,6 +46,7 @@ executables:
 
       - nixage
 
+      - directory
       - optparse-applicative
       - process
       - temporary
@@ -53,3 +54,6 @@ executables:
 
     ghc-options:
       - -threaded
+
+data-dir: data
+data-files: stack-shell.nix

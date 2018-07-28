@@ -76,7 +76,12 @@ convertOutPs =
       , StackConvertOut
         <$> (strArgument $ metavar "stack-yaml")
         <*> (strArgument $ metavar "snapshot-yaml")
-      , StackConvertOut "stack.yaml" "snapshot.yaml"
+        <*> (strArgument $ metavar "stack-shell")
+      , StackConvertOut "stack.yaml" "snapshot.yaml" "stack-shell.nix"
+      )
+    , ( "to-nix"
+      , pure NixConvertOut
+      , NixConvertOut
       )
     , ( "to-nix"
       , pure NixConvertOut

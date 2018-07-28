@@ -14,10 +14,10 @@ type StackArgs = [Text]
 data ConvertArgs = ConvertArgs ConvertIn ConvertOut deriving (Show)
 
 data ConvertIn
-    = YamlConvertIn Text
+    = YamlConvertIn FilePath
     deriving (Show)
 
 data ConvertOut
-    = StackConvertOut Text Text
+    = StackConvertOut FilePath FilePath FilePath
     | NixConvertOut
     deriving (Show)
