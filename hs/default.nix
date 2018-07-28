@@ -3,4 +3,4 @@
 let
   nixage = import ../nix {};
 
-in nixage.buildYamlProject ./.
+in nixage.buildNixProject ./.

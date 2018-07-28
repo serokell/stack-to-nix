@@ -3,13 +3,14 @@
 let
   inherit (builtins) genList head tail;
   inherit (pkgs.lib) concatMap concatStrings importJSON singleton;
+  inherit (import ../../hs {}) nixage;
 
 in {
   importYaml = path:
     let
-      jsonDrv = pkgs.runCommand "yaml2json" {
-        nativeBuildInputs = [ pkgs.yaml2json ];
-      } ''yaml2json < "${path}" > "$out"'';
+      jsonDrv = pkgs.runCommand "$nixage convert to-nix" {
+        nativeBuildInputs = [ nixage ];
+      } ''cd "${path}" && nixage convert to-nix > "$out"'';
     in importJSON jsonDrv;
 
   format = rec {
