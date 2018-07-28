@@ -10,10 +10,14 @@ module Nixage.Project.Types
     , ExternalSource (..)
 
     , NixageException(..)
+    , GhcOptions (..)
     ) where
 
 import Universum hiding (Show)
 
+import qualified Data.Map.Strict as M
+import Data.Aeson ( ToJSON(..), FromJSON(..), withObject
+                  , (.:?), Value(..))
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Text (Text)
@@ -57,8 +61,32 @@ data ExternalSource
         }
   deriving (Eq, Generic, Show)
 
-data NixageException =
-      ProjectNativeToStackConfigException Text
+type GhcOption = Text
+
+data GhcOptions
+    = GhcOptions
+        { goLocals :: Maybe GhcOption
+        , goEverything :: Maybe GhcOption
+        , goPackageOptions :: Map PackageName GhcOption
+        }
+    deriving (Show)
+
+instance ToJSON GhcOptions where
+    toJSON (GhcOptions locals everything packageOptions) = toJSON
+        . M.alter (const locals) "$locals"
+        . M.alter (const everything) "$everything"
+        $ packageOptions
+
+instance FromJSON GhcOptions where
+    parseJSON = withObject "GhcOptions" $ \v ->
+        GhcOptions
+            <$> v .:? "$locals"
+            <*> v .:? "$everything"
+            <*> (parseJSON (Object v) <&> M.delete "$locals" . M.delete "$everything")
+
+
+data NixageException
+    = ProjectNativeToStackConfigException Text
     | YamlDecodingException Text
     | ProjectNativeToNixException Text
     | ConvertException Text

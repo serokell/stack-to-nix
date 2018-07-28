@@ -24,7 +24,8 @@ import Nix.Expr.Types (NExpr)
 
 import Nixage.Project.Extensible
 import Nixage.Project.Types ( NixHash, NixpkgsVersion(..), StackageVersion(..)
-                            , PackageName, PackageVersion, ExternalSource(..))
+                            , PackageName, PackageVersion, ExternalSource(..)
+                            , GhcOptions(..))
 
 
 -- | Nixage native AST marker
@@ -48,8 +49,9 @@ pattern ProjectNative :: Text
                       -> (Maybe StackageVersion)
                       -> Map PackageName FilePath
                       -> Map PackageName (ExtraDepVersion AstNixage)
+                      -> Maybe GhcOptions
                       -> Project AstNixage
-pattern ProjectNative r mnv msv ps eds = Project () r mnv msv ps eds
+pattern ProjectNative r mnv msv ps eds mgo = Project () r mnv msv ps eds mgo
 
 
 pattern HackageDepVersionNative :: PackageVersion
@@ -86,12 +88,21 @@ instance Monad m => ToNix NixpkgsVersion m NExpr where
         , "sha256" $= mkStr sha256
         ]
 
+instance Monad m => ToNix GhcOptions m NExpr where
+    toNix (GhcOptions locals everything ps) = do
+        let psExpr = uncurry ($=) . second mkStr <$> toList ps
+        return $ mkNonRecSet $
+               maybeToList (("\"$locals\"" $=) . mkStr <$> locals)
+            <> maybeToList (("\"$everything\"" $=) . mkStr <$> everything)
+            <> psExpr
+
 instance Monad m => ToNix ProjectNative m NExpr where
-    toNix (Project () r mnv msv ps eds) = do
+    toNix (Project () r mnv msv ps eds mgo) = do
         mnvExpr <- mapM toNix mnv
         msvExpr <- mapM toNix msv
         let packagesExpr = attrsE $ second (mkStr . toText) <$> toList ps
         edsExpr <- attrsE <$> mapM (sequence . second toNix) (toList eds)
+        mgoExpr <- sequence $ toNix <$> mgo
 
         return $ mkNonRecSet $
             [ "resolver" $= mkStr r
@@ -102,3 +113,4 @@ instance Monad m => ToNix ProjectNative m NExpr where
             [ "packages" $= packagesExpr
             , "extra-deps" $= edsExpr
             ]
+            <> maybeToList (("ghc-options" $=) <$> mgoExpr)

@@ -24,7 +24,8 @@ import Nixage.Project.Native ( ProjectNative, pattern ProjectNative
                              , pattern HackageDepVersionNative
                              , pattern SourceDepVersionNative )
 import Nixage.Project.Types ( NixHash, NixpkgsVersion, StackageVersion
-                            , PackageName, PackageVersion, ExternalSource(..))
+                            , PackageName, PackageVersion, ExternalSource(..)
+                            , GhcOptions)
 
 -- | Yaml AST marker
 data AstYaml
@@ -46,8 +47,9 @@ pattern ProjectYaml :: Text
                     -> (Maybe StackageVersion)
                     -> Map PackageName FilePath
                     -> Map PackageName (ExtraDepVersion AstYaml)
+                    -> Maybe GhcOptions
                     -> Project AstYaml
-pattern ProjectYaml r mnv msv ps eds = Project () r mnv msv ps eds
+pattern ProjectYaml r mnv msv ps eds mgo = Project () r mnv msv ps eds mgo
 
 pattern HackageDepVersionYaml :: PackageVersion
                               -> ExtraDepVersion AstYaml
@@ -81,10 +83,11 @@ instance FromJSON ProjectYaml where
             <*> v .:? "stackage"
             <*> v .:  "packages"
             <*> v .:? "extra-deps" .!= mempty
+            <*> v .:? "ghc-options"
 
 projectYamlToProjectNative :: ProjectYaml -> ProjectNative
-projectYamlToProjectNative (Project () r mnv msv ps eds) =
-    ProjectNative r mnv msv ps eds'
+projectYamlToProjectNative (Project () r mnv msv ps eds mgo) =
+    ProjectNative r mnv msv ps eds' mgo
   where
     eds' = eds <&> \case
       HackageDepVersion () v        -> HackageDepVersionNative v

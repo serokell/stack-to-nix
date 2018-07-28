@@ -17,7 +17,8 @@ import Data.Text (Text)
 import GHC.Generics (Generic)
 
 import Nixage.Project.Types ( NixHash, NixpkgsVersion, StackageVersion
-                            , PackageName, PackageVersion, ExternalSource)
+                            , PackageName, PackageVersion, ExternalSource
+                            , GhcOptions)
 
 
 -- | Extensible project specification AST
@@ -31,6 +32,8 @@ data Project x = Project
     , pPackages :: Map PackageName FilePath
 
     , pExtraDeps :: Map PackageName (ExtraDepVersion x)
+
+    , pGhcOptions :: Maybe GhcOptions
     }
   deriving (Generic)
 
