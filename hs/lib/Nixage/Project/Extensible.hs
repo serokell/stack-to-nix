@@ -12,26 +12,25 @@ module Nixage.Project.Extensible
 
 import Universum
 
-import Data.Map (Map)
+import Data.HashMap.Strict (HashMap)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 
-import Nixage.Project.Types ( NixHash, NixpkgsVersion, StackageVersion
-                            , PackageName, PackageVersion, ExternalSource
-                            , GhcOptions)
+import Nixage.Project.Types (ExternalSource, GhcOptions, NixHash, NixpkgsVersion, PackageName,
+                             PackageVersion, StackageVersion)
 
 
 -- | Extensible project specification AST
 data Project x = Project
-    { pXProject :: !(XProject x)
+    { pXProject   :: !(XProject x)
 
-    , pResolver :: Text
-    , pNixpkgs  :: Maybe NixpkgsVersion
-    , pStackage :: Maybe StackageVersion
+    , pResolver   :: Text
+    , pNixpkgs    :: Maybe NixpkgsVersion
+    , pStackage   :: Maybe StackageVersion
 
-    , pPackages :: Map PackageName FilePath
+    , pPackages   :: HashMap PackageName FilePath
 
-    , pExtraDeps :: Map PackageName (ExtraDepVersion x)
+    , pExtraDeps  :: HashMap PackageName (ExtraDepVersion x)
 
     , pGhcOptions :: Maybe GhcOptions
     }

@@ -15,7 +15,7 @@ module Nixage.Project.Yaml
 import Universum
 
 import Data.Aeson (FromJSON(..), Value(..), (.:), (.:?), (.!=), withObject)
-import Data.Map (Map)
+import Data.HashMap.Strict (HashMap)
 import Data.Text (Text)
 import Data.Void (Void)
 
@@ -45,8 +45,8 @@ deriving instance Show (ExtraDepVersion AstYaml)
 pattern ProjectYaml :: Text
                     -> (Maybe NixpkgsVersion)
                     -> (Maybe StackageVersion)
-                    -> Map PackageName FilePath
-                    -> Map PackageName (ExtraDepVersion AstYaml)
+                    -> HashMap PackageName FilePath
+                    -> HashMap PackageName (ExtraDepVersion AstYaml)
                     -> Maybe GhcOptions
                     -> Project AstYaml
 pattern ProjectYaml r mnv msv ps eds mgo = Project () r mnv msv ps eds mgo

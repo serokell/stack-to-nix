@@ -13,9 +13,10 @@ module Nixage.Project.Native
   , pattern SourceDepVersionNative
   ) where
 
-import Universum hiding (toList)
+import Universum
 
-import Data.Map (Map, toList)
+import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as HM
 import Data.Text (Text)
 import Data.Void (Void)
 import Nix.Convert (ToNix(..))
@@ -47,8 +48,8 @@ deriving instance Show (ExtraDepVersion AstNixage)
 pattern ProjectNative :: Text
                       -> (Maybe NixpkgsVersion)
                       -> (Maybe StackageVersion)
-                      -> Map PackageName FilePath
-                      -> Map PackageName (ExtraDepVersion AstNixage)
+                      -> HashMap PackageName FilePath
+                      -> HashMap PackageName (ExtraDepVersion AstNixage)
                       -> Maybe GhcOptions
                       -> Project AstNixage
 pattern ProjectNative r mnv msv ps eds mgo = Project () r mnv msv ps eds mgo
@@ -90,7 +91,7 @@ instance Monad m => ToNix NixpkgsVersion m NExpr where
 
 instance Monad m => ToNix GhcOptions m NExpr where
     toNix (GhcOptions locals everything ps) = do
-        let psExpr = uncurry ($=) . second mkStr <$> toList ps
+        let psExpr = uncurry ($=) . second mkStr <$> HM.toList ps
         return $ mkNonRecSet $
                maybeToList (("\"$locals\"" $=) . mkStr <$> locals)
             <> maybeToList (("\"$everything\"" $=) . mkStr <$> everything)
@@ -100,8 +101,8 @@ instance Monad m => ToNix ProjectNative m NExpr where
     toNix (Project () r mnv msv ps eds mgo) = do
         mnvExpr <- mapM toNix mnv
         msvExpr <- mapM toNix msv
-        let packagesExpr = attrsE $ second (mkStr . toText) <$> toList ps
-        edsExpr <- attrsE <$> mapM (sequence . second toNix) (toList eds)
+        let packagesExpr = attrsE $ second (mkStr . toText) <$> HM.toList ps
+        edsExpr <- attrsE <$> mapM (sequence . second toNix) (HM.toList eds)
         mgoExpr <- sequence $ toNix <$> mgo
 
         return $ mkNonRecSet $

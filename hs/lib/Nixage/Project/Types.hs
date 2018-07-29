@@ -15,14 +15,13 @@ module Nixage.Project.Types
 
 import Universum hiding (Show)
 
-import qualified Data.Map.Strict as M
-import Data.Aeson ( ToJSON(..), FromJSON(..), withObject
-                  , (.:?), Value(..))
+import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), withObject, (.:?))
 import Data.Aeson.Options (defaultOptions)
 import Data.Aeson.TH (deriveJSON)
+import qualified Data.HashMap.Strict as HM
 import Data.Text (Text)
 import GHC.Generics (Generic)
-import GHC.Show (Show(..))
+import GHC.Show (Show (..))
 
 
 -- | Hash used for nix source (currently sha256)
@@ -30,7 +29,7 @@ type NixHash = Text
 
 -- | Version of @nixpkgs@
 data NixpkgsVersion = NixpkgsVersion
-    { nvUrl  :: Text
+    { nvUrl    :: Text
     , nvSha256 :: NixHash
     }
   deriving (Eq, Generic, Show)
@@ -56,8 +55,8 @@ type PackageVersion = Text
 -- | Description of a way to obtain the source of the package
 data ExternalSource
     = GitSource
-        { gsGit    :: Text
-        , gsRev    :: Text
+        { gsGit :: Text
+        , gsRev :: Text
         }
   deriving (Eq, Generic, Show)
 
@@ -65,16 +64,16 @@ type GhcOption = Text
 
 data GhcOptions
     = GhcOptions
-        { goLocals :: Maybe GhcOption
-        , goEverything :: Maybe GhcOption
-        , goPackageOptions :: Map PackageName GhcOption
+        { goLocals         :: Maybe GhcOption
+        , goEverything     :: Maybe GhcOption
+        , goPackageOptions :: HashMap PackageName GhcOption
         }
     deriving (Show)
 
 instance ToJSON GhcOptions where
     toJSON (GhcOptions locals everything packageOptions) = toJSON
-        . M.alter (const locals) "$locals"
-        . M.alter (const everything) "$everything"
+        . HM.alter (const locals) "$locals"
+        . HM.alter (const everything) "$everything"
         $ packageOptions
 
 instance FromJSON GhcOptions where
@@ -82,7 +81,7 @@ instance FromJSON GhcOptions where
         GhcOptions
             <$> v .:? "$locals"
             <*> v .:? "$everything"
-            <*> (parseJSON (Object v) <&> M.delete "$locals" . M.delete "$everything")
+            <*> (parseJSON (Object v) <&> HM.delete "$locals" . HM.delete "$everything")
 
 
 data NixageException

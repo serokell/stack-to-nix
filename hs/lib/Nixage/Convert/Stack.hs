@@ -2,13 +2,12 @@ module Nixage.Convert.Stack where
 
 import Universum
 
-import Data.Aeson (ToJSON(..), object, (.=), Value(..))
-import qualified Data.Map.Strict as M
+import Data.Aeson (ToJSON (..), Value (..), object, (.=))
+import qualified Data.HashMap.Strict as HM
 
-import Nixage.Project.Types ( PackageName, PackageVersion
-                            , ExternalSource(GitSource), GhcOptions)
 import Nixage.Project.Extensible (ExtraDepVersion (..), Project (..))
 import Nixage.Project.Native (AstNixage, ProjectNative)
+import Nixage.Project.Types (ExternalSource (GitSource), GhcOptions, PackageName, PackageVersion)
 
 
 data StackExtraDepVersion =
@@ -17,22 +16,22 @@ data StackExtraDepVersion =
     deriving Show
 
 data StackCustomSnapshot = StackCustomSnapshot
-    { scsName :: Text
+    { scsName     :: Text
     , scsResolver :: Text
-    , scsPackages :: Map PackageName StackExtraDepVersion
+    , scsPackages :: HashMap PackageName StackExtraDepVersion
     } deriving Show
 
 data StackConfig = StackConfig
     { scStackCustomSnapshot :: StackCustomSnapshot
-    , scPackages :: Map PackageName FilePath
-    , scGhcOptions :: Maybe GhcOptions
+    , scPackages            :: HashMap PackageName FilePath
+    , scGhcOptions          :: Maybe GhcOptions
     } deriving Show
 
 instance ToJSON StackCustomSnapshot where
     toJSON (StackCustomSnapshot name resolver packages) =
         object [ "name" .= name
                , "resolver" .= resolver
-               , "packages" .= map packageToJson (M.toList packages)
+               , "packages" .= map packageToJson (HM.toList packages)
                ]
       where
         packageToJson :: (PackageName, StackExtraDepVersion) -> Value
