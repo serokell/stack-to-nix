@@ -35,6 +35,7 @@ library:
     - hnix
     - text
     - unordered-containers
+    - yaml
 
 executables:
   nixage:

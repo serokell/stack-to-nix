@@ -1,9 +1,14 @@
-module Nixage.Convert.Stack where
+module Nixage.Convert.Stack
+       ( projectNativeToStackFiles
+       , encodeToStack
+       ) where
 
 import Universum
 
+import Control.Arrow ((>>>))
 import Data.Aeson (ToJSON (..), Value (..), object, (.=))
 import qualified Data.HashMap.Strict as HM
+import Data.Yaml (encode, encodeFile)
 
 import Nixage.Project.Extensible (ExtraDepVersion (..), Project (..))
 import Nixage.Project.Native (AstNixage, ProjectNative)
@@ -15,6 +20,7 @@ data StackExtraDepVersion =
     | StackGitDepVersion Text Text (Maybe FilePath) -- git, rev, subdir
     deriving Show
 
+-- | Stack snapshot (name, resolver, packages)
 data StackCustomSnapshot = StackCustomSnapshot
     { scsName     :: Text
     , scsResolver :: Text
@@ -43,12 +49,12 @@ instance ToJSON StackCustomSnapshot where
                    , "subdirs" .= [fromMaybe "." subdir]
                    ]
 
--- | Create stack and snapshot yaml files content
-createStackFiles :: StackConfig
-                 -> FilePath       -- ^ Snapshot path
-                 -> FilePath       -- ^ Stack shell path
-                 -> (Value, Value)
-createStackFiles (StackConfig stackCustomSnapshot packages mgo) snapshotPath shellPath =
+-- | StackConfig json split into stack and snapshot jsons.
+stackToJSON :: FilePath       -- ^ Snapshot path
+            -> FilePath       -- ^ Stack shell path
+            -> StackConfig
+            -> (Value, Value)
+stackToJSON snapshotPath shellPath (StackConfig stackCustomSnapshot packages mgo) =
     (stack, toJSON stackCustomSnapshot)
   where
     stack = object
@@ -77,3 +83,28 @@ projectNativeToStackConfig (Project () resolver _ _ ps eds go) =
         StackGitDepVersion git rev msd
     toStackExtraDep (XExtraDepVersion v) =
         absurd v
+
+-- | Pure native to stack conversion
+projectNativeToStackFiles :: FilePath       -- ^ Snapshot path
+                          -> FilePath       -- ^ Stack shell path
+                          -> ProjectNative
+                          -> (ByteString, ByteString)
+projectNativeToStackFiles snapshotPath stackShellPath =
+        projectNativeToStackConfig
+    >>> stackToJSON snapshotPath stackShellPath
+    >>> bimap encode encode
+
+
+-- | Conversion + IO that writes stack and snapshot yaml files
+encodeToStack :: (MonadIO m, MonadThrow m)
+                 => FilePath     -- ^ Stack yaml path
+                 -> FilePath     -- ^ Snapshot yaml path
+                 -> FilePath     -- ^ Stack shell  path
+                 -> ProjectNative
+                 -> m ()
+encodeToStack stackPath snapshotPath stackShellPath = do
+        projectNativeToStackConfig
+    >>> stackToJSON snapshotPath stackShellPath
+    >>> \(stack, snapshot) -> liftIO $ do
+            encodeFile snapshotPath snapshot
+            encodeFile stackPath stack
