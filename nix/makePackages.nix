@@ -16,7 +16,12 @@ let
     then proj.nixpkgs-stackage
     else import ./nixpkgs-stackage.nix;
 
-  projPkgs = import (fetchTarball proj.nixpkgs) {
+  nixpkgsSrc =
+    if proj ? nixpkgs
+    then proj.nixpkgs
+    else import ./nixpkgs.nix;
+
+  projPkgs = import (fetchTarball nixpkgsSrc) {
     inherit config system;
     overlays = [ overrides (import (fetchTarball stackageSrc)) ];
   };
