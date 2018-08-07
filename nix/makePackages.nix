@@ -3,7 +3,7 @@
 let
   inherit (builtins) getAttr;
   inherit (pkgs.lib)
-    any cleanSource composeExtensions foldr id mapAttrs mapAttrsToList warn;
+    any cleanSource cleanSourceWith composeExtensions foldr hasPrefix id mapAttrs mapAttrsToList warn;
   inherit (pkgs.haskell.lib) overrideCabal;
 
   inherit (import ./extraDeps { inherit pkgs; }) depNeedsPrefetch resolveExtraDep;
@@ -43,7 +43,30 @@ let
   extra-deps = self: super:
     mapAttrs (resolveExtraDep self super) proj.extra-deps;
 
-  projectSrc = cleanSource proj.root;
+  nixageFilter = name: type:
+    let
+      baseName = baseNameOf name;
+      inRoot = dirOf name == toString proj.root;
+      pkgStackWork = mapAttrsToList (_: locPath: locPath + "/.stack-work") proj.packages;
+      match = p: name == toString (proj.root + ("/" + p));
+      matchDir = p: type == "directory" && match p;
+    in ! (
+         matchDir ".stack-work"
+      || any matchDir pkgStackWork
+      || match "stack.yaml"
+
+      || matchDir "dist"
+      || matchDir "dist-newstyle"
+      || inRoot && hasPrefix ".ghc.environment" baseName
+      || match "cabal.project"
+      || match "cabal.project.local"
+    );
+
+  projectSrc = cleanSourceWith {
+    filter = nixageFilter;
+    src = cleanSource proj.root;
+  };
+
   mkLocalPackage = name: path:
     let
       drv = callCabal2nix stackagePackages name projectSrc {} ''--subpath="${path}"'';
