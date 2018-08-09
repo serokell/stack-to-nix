@@ -1,5 +1,6 @@
+root:
 let
-  x = import ./default.nix {};
+  x = import (root + "/default.nix") {};
   pkgs = x._pkgs;
   stackCmd = ''stack --internal-re-exec-version="${pkgs.stack.version}"'';
 in x._haskellPackages.shellFor {

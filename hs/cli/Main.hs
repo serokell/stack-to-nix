@@ -1,13 +1,13 @@
 import Universum
 
 import Options.Applicative (execParser, fullDesc, header, helper, info, progDesc)
-import System.Directory (copyFile)
+import System.IO (hClose)
 import System.IO.Temp (withSystemTempFile, withTempFile)
 import System.Process (createProcess, delegate_ctlc, proc, waitForProcess)
 
 import Nixage.Convert.FromYaml (decodeFromYaml)
 import Nixage.Convert.Nix (projectNativeToPrettyNix)
-import Nixage.Convert.Stack (encodeToStack)
+import Nixage.Convert.Stack (StackFilesInfo (..), encodeToStack)
 import Paths_nixage (getDataFileName)
 
 import Parser
@@ -31,12 +31,13 @@ main = execParser (info (helper <*> nixageP) infoMod) >>= \case
 stackAction :: (MonadIO m, MonadThrow m, MonadMask m) => StackArgs-> m ()
 stackAction args = do
     projectNative <- decodeFromYaml "project.yaml"
-    withSystemTempFile "nixage-stack-snapshot.yaml" $ \snapshotPath _ ->
-      withTempFile "." "nixage-stack.yaml" $ \stackPath _ -> do
-        withTempFile "." "stack-shell.nix" $ \stackShellPath _ -> do
-          stackShellSource <- liftIO $ getDataFileName "stack-shell.nix"
-          liftIO $ copyFile stackShellSource stackShellPath
-          encodeToStack stackPath snapshotPath stackShellPath projectNative
+    withSystemTempFile "nixage-stack-snapshot.yaml" $ \snapshotPath snapshotH ->
+      withTempFile "." "nixage-stack.yaml" $ \stackPath stackH -> do
+        withTempFile "." "nixage-stack-shell.nix" $ \stackShellPath stackShellH -> do
+          stackShellSourcePath <- liftIO $ getDataFileName "stack-shell.nix"
+          let stackFilesInfo = StackFilesInfo snapshotPath stackShellPath stackShellSourcePath "./."
+          liftIO $ hClose stackShellH >> hClose stackH >> hClose snapshotH
+          encodeToStack stackPath stackFilesInfo projectNative
           let  args' = ["--stack-yaml", toText stackPath] <> args
           liftIO $ do
               (_,_,_,handle) <- createProcess $
@@ -50,7 +51,8 @@ convertAction (ConvertArgs convertIn convertOut) = do
       YamlConvertIn yamlPath -> decodeFromYaml (toString yamlPath)
     case convertOut of
       StackConvertOut stackPath snapshotPath stackShellPath -> do
-        encodeToStack (toString stackPath) (toString snapshotPath)
-                      (toString stackShellPath) projectNative
+        stackShellSourcePath <- liftIO $ getDataFileName "stack-shell.nix"
+        let stackFilesInfo = StackFilesInfo snapshotPath stackShellPath stackShellSourcePath "./."
+        encodeToStack (toString stackPath) stackFilesInfo projectNative
       NixConvertOut -> do
           print $ projectNativeToPrettyNix projectNative

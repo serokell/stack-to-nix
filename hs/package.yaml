@@ -49,6 +49,7 @@ executables:
       - nixage
 
       - directory
+      - filepath
       - optparse-applicative
       - process
       - temporary

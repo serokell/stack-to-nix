@@ -1,6 +1,9 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module Nixage.Convert.Stack
        ( projectNativeToStackFiles
        , encodeToStack
+       , StackFilesInfo (..)
        ) where
 
 import Universum
@@ -28,16 +31,24 @@ data StackCustomSnapshot = StackCustomSnapshot
     } deriving Show
 
 data StackConfig = StackConfig
-    { scStackCustomSnapshot :: StackCustomSnapshot
-    , scPackages            :: HashMap PackageName FilePath
-    , scGhcOptions          :: Maybe GhcOptions
+    { scCustomSnapshot :: StackCustomSnapshot
+    , scPackages       :: HashMap PackageName FilePath
+    , scGhcOptions     :: Maybe GhcOptions
     } deriving Show
 
+data StackFilesInfo = StackFilesInfo
+    { sfiSnapshot    :: FilePath
+    , sfiShell       :: FilePath
+    , sfiShellSource :: FilePath
+    , sfiRoot        :: FilePath
+    }
+
+
 instance ToJSON StackCustomSnapshot where
-    toJSON (StackCustomSnapshot name resolver packages) =
-        object [ "name" .= name
-               , "resolver" .= resolver
-               , "packages" .= map packageToJson (HM.toList packages)
+    toJSON StackCustomSnapshot{..} =
+        object [ "name" .= scsName
+               , "resolver" .= scsResolver
+               , "packages" .= map packageToJson (HM.toList scsPackages)
                ]
       where
         packageToJson :: (PackageName, StackExtraDepVersion) -> Value
@@ -50,24 +61,23 @@ instance ToJSON StackCustomSnapshot where
                    ]
 
 -- | StackConfig json split into stack and snapshot jsons.
-stackToJSON :: FilePath       -- ^ Snapshot path
-            -> FilePath       -- ^ Stack shell path
-            -> StackConfig
-            -> (Value, Value)
-stackToJSON snapshotPath shellPath (StackConfig stackCustomSnapshot packages mgo) =
-    (stack, toJSON stackCustomSnapshot)
+stackToJSON :: StackFilesInfo -> StackConfig -> (Value, Value, Text)
+stackToJSON StackFilesInfo{..} StackConfig{..}
+    = (stack, toJSON scCustomSnapshot, stackShell)
   where
     stack = object
-        [ "resolver" .= snapshotPath
-        , "packages" .= elems packages
+        [ "resolver" .= sfiSnapshot
+        , "packages" .= elems scPackages
         , "nix" .= nix
-        , "ghc-options" .= mgo
+        , "ghc-options" .= scGhcOptions
         ]
 
     nix = object
         [ "enable" .= True
-        , "shell-file" .= shellPath
+        , "shell-file" .= sfiShell
         ]
+
+    stackShell = toText $ "import " <> sfiShellSource <> " " <> sfiRoot
 
 -- | Convert ProjectNative AST to StackConfig
 projectNativeToStackConfig :: ProjectNative -> StackConfig
@@ -85,26 +95,25 @@ projectNativeToStackConfig (Project () resolver _ _ ps eds go) =
         absurd v
 
 -- | Pure native to stack conversion
-projectNativeToStackFiles :: FilePath       -- ^ Snapshot path
-                          -> FilePath       -- ^ Stack shell path
+projectNativeToStackFiles :: StackFilesInfo
                           -> ProjectNative
-                          -> (ByteString, ByteString)
-projectNativeToStackFiles snapshotPath stackShellPath =
+                          -> (ByteString, ByteString, ByteString)
+projectNativeToStackFiles stackFilesInfo  =
         projectNativeToStackConfig
-    >>> stackToJSON snapshotPath stackShellPath
-    >>> bimap encode encode
+    >>> stackToJSON stackFilesInfo
+    >>> (\(x,y,z) -> (encode x, encode y, encodeUtf8 z))
 
 
 -- | Conversion + IO that writes stack and snapshot yaml files
 encodeToStack :: (MonadIO m, MonadThrow m)
-                 => FilePath     -- ^ Stack yaml path
-                 -> FilePath     -- ^ Snapshot yaml path
-                 -> FilePath     -- ^ Stack shell  path
-                 -> ProjectNative
-                 -> m ()
-encodeToStack stackPath snapshotPath stackShellPath = do
+              => FilePath        -- ^ Stack yaml path
+              -> StackFilesInfo
+              -> ProjectNative
+              -> m ()
+encodeToStack stackPath sfi@StackFilesInfo{sfiSnapshot, sfiShell} =
         projectNativeToStackConfig
-    >>> stackToJSON snapshotPath stackShellPath
-    >>> \(stack, snapshot) -> liftIO $ do
-            encodeFile snapshotPath snapshot
+    >>> stackToJSON sfi
+    >>> \(stack, snapshot, shell) -> liftIO $ do
+            encodeFile sfiSnapshot snapshot
             encodeFile stackPath stack
+            writeFile sfiShell shell
