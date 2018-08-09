@@ -2,16 +2,16 @@
 
 let
   inherit (builtins) genList head tail;
-  inherit (pkgs.lib) concatMap concatStrings importJSON singleton;
-  inherit (import ../../hs {}) nixage;
+  inherit (pkgs.lib) concatMap concatStrings singleton;
+  inherit (import ../hs {}) nixage;
 
 in {
   importYaml = path:
     let
-      jsonDrv = pkgs.runCommand "$nixage convert to-nix" {
+      jsonDrv = pkgs.runCommand "nixage-yaml-to-nix" {
         nativeBuildInputs = [ nixage ];
       } ''cd "${path}" && nixage convert to-nix > "$out"'';
-    in importJSON jsonDrv;
+    in import jsonDrv;
 
   format = rec {
     indented = indentSize: lines:
