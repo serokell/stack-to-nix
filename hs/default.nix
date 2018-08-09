@@ -1,6 +1,6 @@
-{}:
+{ exposeNixage ? false }:
 
 let
-  nixage = import ../nix {};
+  nixage = import ../nix { inherit exposeNixage; };
 
 in nixage.buildNixProject ./.

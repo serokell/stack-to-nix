@@ -1,10 +1,10 @@
 root:
 let
-  x = import (root + "/default.nix") {};
-  pkgs = x._pkgs;
+  x = import (root + "/default.nix") { exposeNixage = true; };
+  pkgs = x._nixage.pkgs;
   stackCmd = ''stack --internal-re-exec-version="${pkgs.stack.version}"'';
-in x._haskellPackages.shellFor {
-  packages = _: pkgs.lib.attrValues x._target;
+in x._nixage.haskellPackages.shellFor {
+  packages = _: pkgs.lib.attrValues x._nixage.target;
 
   nativeBuildInputs = [ pkgs.stack pkgs.git ];
   preferLocalBuild = true;
