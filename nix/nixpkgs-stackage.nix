@@ -1,4 +1,4 @@
 {
-  url = "https://github.com/typeable/nixpkgs-stackage/archive/0852a4b5097c576a4d42a6cd1fdb9e1746a85e3e.tar.gz";
-  sha256 = "17dycsv7qms9jdpzimpxk2kq0bmknxqnm2rggfkqahzl6ran69ry";
+  url = "https://github.com/typeable/nixpkgs-stackage/archive/6f7a24dbdb8086144cad7a55363e1ec04214b748.tar.gz";
+  sha256 = "03s6jn6q69h2j79fbbkgi78dk2lmkq05y7c4sgjjx9k9k3hxhvk9";
 }

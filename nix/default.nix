@@ -1,4 +1,4 @@
-{ nixpkgs ? import <nixpkgs>
+{ pkgs ? import <nixpkgs> {}
 , system ? builtins.currentSystem
 , config ? {}
 , overrides ? (_: _: {})
@@ -6,10 +6,6 @@
 }:
 
 let
-  pkgs = nixpkgs {
-#    inherit config system;
-  };
-
   inherit (pkgs.lib) mapAttrs;
   inherit (import ./prefetch.nix { inherit pkgs; }) prefetchAllIncomplete;
   inherit (import ./yaml.nix { inherit pkgs; }) importYaml;
