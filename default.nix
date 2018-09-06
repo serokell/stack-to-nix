@@ -15,8 +15,6 @@ let
     inherit pkgs system config overrides haskellOverrides;
   };
 
-  toStack = import ./interop/stack/toStack.nix { inherit pkgs; };
-
   makeNixageProj = proj': root:
     let
       # Set defaults and root
@@ -27,7 +25,6 @@ let
         pkgs = nixageProj.projPkgs;
         haskellPackages = nixageProj.haskellPackages;
         target = nixageProj.target;
-        stack-yaml = toStack proj;
         prefetch-incomplete = prefetchAllIncomplete proj;
       };
     in
