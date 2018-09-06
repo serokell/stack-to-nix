@@ -6,10 +6,17 @@
 , exposeNixage ? false
 }:
 
+with pkgs;
+with lib;
+
 let
-  inherit (pkgs.lib) mapAttrs;
+  yamlToJSON = path: runCommand "yaml.json" {} ''
+    ${yaml2json}/bin/yaml2json < ${path} > $out
+  '';
+
+  importYAML = path: importJSON (yamlToJSON path);
+
   inherit (import ./prefetch.nix { inherit pkgs; }) prefetchAllIncomplete;
-  inherit (import ./yaml.nix { inherit pkgs; }) importYaml;
 
   nixagePackages = import ./makePackages.nix {
     inherit pkgs system config overrides haskellOverrides;
@@ -29,9 +36,10 @@ let
       };
     in
       nixageProj.target // (if exposeNixage then { inherit _nixage; } else {});
-in {
+in
+
+{
   inherit pkgs;
 
-  buildNixProject  = root: makeNixageProj (import (root + "/project.nix")) root;
-  buildYamlProject = root: makeNixageProj (importYaml root) root;
+  buildStackProject = root: makeNixageProj (importYAML (root + "/project.yaml")) root;
 }
