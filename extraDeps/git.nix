@@ -10,10 +10,12 @@ in
 
   resolveGitDep = self: name: repo:
     let
-      src = pkgs.fetchgit {
+      src = fetchGit {
         url = repo.git;
-        inherit (repo) rev sha256;
+        rev = repo.commit;
       };
+
       subdir = optionalString (repo ? subdir) ''--subpath="${repo.subdir}"'';
-    in callCabal2nix self name src {} subdir;
+    in
+    callCabal2nix self name src {} subdir;
 }
