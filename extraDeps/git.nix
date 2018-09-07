@@ -12,6 +12,7 @@ in
     let
       src = fetchGit {
         url = repo.git;
+        ref = "*";
         rev = repo.commit;
       };
 
