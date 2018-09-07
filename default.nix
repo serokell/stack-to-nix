@@ -21,5 +21,5 @@ let
 in
 
 {
-  buildStackProject = root: (buildProject (importStackProject root)).target;
+  buildStackProject = root: buildProject (importStackProject root);
 }

@@ -6,8 +6,7 @@ let
     any cleanSource cleanSourceWith composeExtensions foldr hasPrefix id mapAttrs mapAttrsToList warn;
   inherit (pkgs.haskell.lib) overrideCabal;
 
-  inherit (import ./extraDeps { inherit pkgs; }) depNeedsPrefetch resolveExtraDep;
-  inherit (import ./prefetch.nix { inherit pkgs; }) prefetchAllIncomplete;
+  inherit (import ./extraDeps { inherit pkgs; }) resolveExtraDep;
   inherit (import ./upstream.nix { inherit pkgs; }) callCabal2nix;
 
   stackageSrc =
@@ -81,12 +80,6 @@ let
     in (overrideCabal drv (_: cabalOverrides)).overrideAttrs (_: derivationOverrides);
   local-packages = self: super:
     mapAttrs mkLocalPackage proj.packages;
+in
 
-in {
-  inherit projPkgs;
-  haskellPackages = stackagePackages;
-  target =
-    if any id (mapAttrsToList depNeedsPrefetch proj.extra-deps)
-    then warn "Some dependencies are incomplete." (prefetchAllIncomplete proj)
-    else mapAttrs (name: _: getAttr name stackagePackages) proj.packages;
-}
+mapAttrs (name: _: getAttr name stackagePackages) proj.packages
