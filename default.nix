@@ -1,8 +1,4 @@
-{ pkgs ? import <nixpkgs> {}
-, system ? builtins.currentSystem
-, config ? {}
-, haskellOverrides ? (_: _: {})
-}:
+{ pkgs ? import <nixpkgs> {}, overrides ? (_: _: {}) }:
 
 with pkgs;
 
@@ -14,7 +10,7 @@ let
   importYAML = path: lib.importJSON (yamlToJSON path);
 
   nixagePackages = import ./makePackages.nix {
-    inherit pkgs system config haskellOverrides;
+    inherit pkgs overrides;
   };
 
   resolveProject = project: root:

@@ -1,4 +1,4 @@
-{ pkgs, system, config, haskellOverrides }: proj:
+{ pkgs, overrides }: proj:
 
 let
   inherit (builtins) getAttr;
@@ -8,7 +8,6 @@ let
 
   inherit (import ./extraDeps { inherit pkgs; }) depNeedsPrefetch resolveExtraDep;
   inherit (import ./prefetch.nix { inherit pkgs; }) prefetchAllIncomplete;
-  inherit (import ./stackage.nix) fixResolverName;
   inherit (import ./upstream.nix { inherit pkgs; }) callCabal2nix;
 
   stackageSrc =
@@ -16,17 +15,12 @@ let
     then proj.nixpkgs-stackage
     else import ./nixpkgs-stackage.nix;
 
-  nixpkgsSrc =
-    if proj ? nixpkgs
-    then proj.nixpkgs
-    else import ./nixpkgs.nix;
+  stackageOverlay = import (fetchTarball stackageSrc);
 
-  projPkgs = import (fetchTarball nixpkgsSrc) {
-    inherit config system;
-    overlays = [ (import (fetchTarball stackageSrc)) ];
-  };
+  projPkgs = stackageOverlay projPkgs pkgs;
 
-  resolver = fixResolverName proj.resolver;
+  # TODO: do something smarter
+  resolver = builtins.replaceStrings ["."] [""] proj.resolver;
 
   stackagePackages = projPkgs.haskell.packages.stackage."${resolver}".override {
     overrides = foldr composeExtensions (_:_:{}) [
