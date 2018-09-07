@@ -20,6 +20,4 @@ let
   };
 in
 
-{
-  buildStackProject = root: buildProject (importStackProject root);
-}
+root: buildProject (importStackProject root)
