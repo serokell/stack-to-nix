@@ -1,4 +1,4 @@
-{ pkgs, system, config, overrides, haskellOverrides }: proj:
+{ pkgs, system, config, haskellOverrides }: proj:
 
 let
   inherit (builtins) getAttr;
@@ -23,7 +23,7 @@ let
 
   projPkgs = import (fetchTarball nixpkgsSrc) {
     inherit config system;
-    overlays = [ overrides (import (fetchTarball stackageSrc)) ];
+    overlays = [ (import (fetchTarball stackageSrc)) ];
   };
 
   resolver = fixResolverName proj.resolver;
