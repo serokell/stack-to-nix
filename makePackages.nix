@@ -27,7 +27,7 @@ let
       speedupDeps
       extra-deps
       local-packages
-      haskellOverrides
+      overrides
     ];
   };
   inherit (stackagePackages) callHackage;

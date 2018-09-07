@@ -9,14 +9,17 @@ let
 
   importYAML = path: lib.importJSON (yamlToJSON path);
 
-  nixagePackages = import ./makePackages.nix {
+  toProject = spec: root:
+    { extra-deps = {}; } // spec // { inherit root; };
+
+  importStackProject = root:
+    toProject (importYAML "${root}/project.yaml") root;
+
+  buildProject = import ./makePackages.nix {
     inherit pkgs overrides;
   };
-
-  resolveProject = project: root:
-    nixagePackages ({ extra-deps = {}; } // project // { inherit root; });
 in
 
 {
-  buildStackProject = root: (resolveProject (importYAML "${root}/project.yaml") root).target;
+  buildStackProject = root: (buildProject (importStackProject root)).target;
 }
