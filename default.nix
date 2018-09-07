@@ -1,4 +1,6 @@
-{ pkgs ? import <nixpkgs> {}, overrides ? (_: _: {}) }:
+{ pkgs ? import <nixpkgs> {}
+, overrides ? (_: _: {})
+, stackage ? (fetchGit { url = "https://github.com/typeable/nixpkgs-stackage"; rev = "6f7a24dbdb8086144cad7a55363e1ec04214b748"; }) }:
 
 with pkgs;
 
@@ -16,7 +18,7 @@ let
     toProject (importYAML "${root}/project.yaml") root;
 
   buildProject = import ./makePackages.nix {
-    inherit pkgs overrides;
+    inherit pkgs overrides stackage;
   };
 in
 

@@ -1,4 +1,4 @@
-{ pkgs, overrides }: proj:
+{ pkgs, overrides, stackage }: proj:
 
 let
   inherit (builtins) getAttr;
@@ -9,14 +9,7 @@ let
   inherit (import ./extraDeps { inherit pkgs; }) resolveExtraDep;
   inherit (import ./upstream.nix { inherit pkgs; }) callCabal2nix;
 
-  stackageSrc =
-    if proj ? nixpkgs-stackage
-    then proj.nixpkgs-stackage
-    else import ./nixpkgs-stackage.nix;
-
-  stackageOverlay = import (fetchTarball stackageSrc);
-
-  projPkgs = stackageOverlay projPkgs pkgs;
+  projPkgs = (import stackage) projPkgs pkgs;
 
   # TODO: do something smarter
   resolver = builtins.replaceStrings ["."] [""] proj.resolver;
