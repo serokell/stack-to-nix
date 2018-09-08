@@ -17,7 +17,7 @@ let
   importStackProject = root:
     toProject (importYAML "${root}/project.yaml") root;
 
-  buildProject = import ./makePackages.nix {
+  buildProject = import ./build.nix {
     inherit pkgs overrides stackage;
   };
 in
