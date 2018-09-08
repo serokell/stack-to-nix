@@ -1,56 +1,55 @@
-{ pkgs, overrides, stackage }: proj:
+{ pkgs, overrides, stackage }: project:
+
+with pkgs;
+with lib;
 
 let
-  inherit (builtins) getAttr;
-  inherit (pkgs.lib)
-    any cleanSource cleanSourceWith composeExtensions foldr hasPrefix id mapAttrs mapAttrsToList warn;
-  inherit (pkgs.haskell.lib) overrideCabal;
+  inherit (haskell.lib) overrideCabal;
 
   inherit (import ./extraDeps { inherit pkgs; }) resolveExtraDep;
   inherit (import ./to.nix pkgs) cabalToNix;
 
-  projPkgs = (import stackage) projPkgs pkgs;
+  stackagePackages = (import stackage) stackagePackages pkgs;
 
   # TODO: do something smarter
-  resolver = builtins.replaceStrings ["."] [""] proj.resolver;
+  resolver = builtins.replaceStrings ["."] [""] project.resolver;
 
-  stackagePackages = projPkgs.haskell.packages.stackage."${resolver}".override {
-    overrides = foldr composeExtensions (_:_:{}) [
+  mergeExtensions = extensions: foldr composeExtensions (_: _: {}) extensions;
+
+  snapshot = stackagePackages.haskell.packages.stackage."${resolver}".override {
+    overrides = mergeExtensions [
       speedupDeps
-      extra-deps
-      local-packages
+      extraDeps
+      localPackages
       overrides
     ];
   };
-  inherit (stackagePackages) callHackage;
 
-  speedupDeps = self: super: {
-    mkDerivation = drv: super.mkDerivation (drv // {
+  inherit (snapshot) callHackage;
+
+  speedupDeps = final: previous: {
+    mkDerivation = drv: previous.mkDerivation (drv // {
       doCheck = false;
       doHaddock = false;
     });
   };
 
-  extra-deps = self: super:
-    mapAttrs (resolveExtraDep self super) proj.extra-deps;
+  extraDeps = final: previous:
+    mapAttrs (resolveExtraDep final previous) project.extra-deps;
 
-  projectSrc = proj.root;
-
-  mkLocalPackage = name: path:
+  overrideLocalPackage = name: path:
     let
-      drv = cabalToNix stackagePackages name projectSrc {} ''--subpath="${path}"'';
-      cabalOverrides = {
+      drv = cabalToNix snapshot name project.root {} ''--subpath="${path}"'';
+      overrides = _: {
         doCheck = true;
         doHaddock = true;
-        # HACK: make it easier to build packages without a license yet
-        license = pkgs.lib.licenses.free;
+        license = licenses.free;
       };
-      derivationOverrides = {
-        strictDeps = true;
-      };
-    in (overrideCabal drv (_: cabalOverrides)).overrideAttrs (_: derivationOverrides);
-  local-packages = self: super:
-    mapAttrs mkLocalPackage proj.packages;
+    in
+    (overrideCabal drv overrides).overrideAttrs (lib.const { strictDeps = true; });
+
+  localPackages = final: previous:
+    mapAttrs overrideLocalPackage project.packages;
 in
 
-mapAttrs (name: _: getAttr name stackagePackages) proj.packages
+mapAttrs (name: lib.const (getAttr name snapshot)) project.packages
