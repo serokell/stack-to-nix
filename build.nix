@@ -8,7 +8,7 @@ let
 
   stackagePackages = (import stackage) stackagePackages pkgs;
 
-  resolver = builtins.replaceStrings ["."] [""] project.resolver;
+  resolver = replaceStrings ["."] [""] project.resolver;
 
   snapshot = stackagePackages.haskell.packages.stackage."${resolver}".override {
     overrides = mergeExtensions [
