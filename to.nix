@@ -13,9 +13,9 @@ in
         extraCabal2nixOptions = options;
       };
     in
-    overrideCabal (self.callPackage expr args) (_super: {
-      inherit src;
-    });
+    overrideCabal
+      (self.callPackage expr args)
+      (lib.const { inherit src; });
 
   callHackage = self: name: version:
     self.callPackage (hackage2nix name version);
