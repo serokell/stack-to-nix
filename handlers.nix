@@ -12,21 +12,25 @@ pkgs: with pkgs; with lib;
 
     test = isString;
   })
-/*
   ({
     handle = spec: self:
       let
         src = fetchGit {
-          url = repo.git;
+          url = spec.git;
           ref = "*";
-          rev = repo.commit;
+          rev = spec.commit;
         };
 
-        subdir = optionalString (repo ? subdir) ''--subpath="${repo.subdir}"'';
+        subdirToAttr = subdir:
+          let
+            name = cabalPackageName "${src}/${subdir}";
+          in
+          nameValuePair name (cabalToNix self name src {} ''--subpath="${subdir}"'');
+
+        subdirs = spec.subdirs or [ "." ];
       in
-      cabalToNix self name src {} subdir;
+      listToAttrs (map subdirToAttr subdirs);
 
     test = spec: isAttrs spec && spec ? git;
   })
-*/
 ]
