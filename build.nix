@@ -1,4 +1,4 @@
-{ pkgs, overrides, stackage }: project:
+{ pkgs, overrides, stackage }: project: root:
 
 with pkgs;
 with lib;
@@ -6,15 +6,9 @@ with lib;
 let
   inherit (haskell.lib) overrideCabal;
 
-  inherit (import ./extra.nix pkgs) resolveExtra;
-  inherit (import ./to.nix pkgs) cabalToNix;
-
   stackagePackages = (import stackage) stackagePackages pkgs;
 
-  # TODO: do something smarter
   resolver = builtins.replaceStrings ["."] [""] project.resolver;
-
-  mergeExtensions = extensions: foldr composeExtensions (_: _: {}) extensions;
 
   snapshot = stackagePackages.haskell.packages.stackage."${resolver}".override {
     overrides = mergeExtensions [
@@ -34,12 +28,21 @@ let
     });
   };
 
+  handlers = import ./handlers.nix pkgs;
+
+  handleExtra = spec:
+    let
+      handler = findFirst (h: h.test spec)
+        (throw "can't handle extra dep: ${spec}") handlers;
+    in
+    handler.handle spec;
+
   extraDeps = final: previous:
-    mapAttrs (resolveExtra final previous) project.extra-deps;
+    zipAttrs (map (spec: handleExtra spec final) (project.extra-deps or []));
 
   overrideLocalPackage = name: path:
     let
-      drv = cabalToNix snapshot name project.root {} ''--subpath="${path}"'';
+      drv = cabalToNix snapshot name root {} ''--subpath="${path}"'';
       overrides = _: {
         doCheck = true;
         doHaddock = true;
@@ -48,8 +51,11 @@ let
     in
     (overrideCabal drv overrides).overrideAttrs (lib.const { strictDeps = true; });
 
+  packages = listToAttrs
+    (map (path: nameValuePair (cabalPackageName "${root}/${path}") path) project.packages);
+
   localPackages = final: previous:
-    mapAttrs overrideLocalPackage project.packages;
+    mapAttrs overrideLocalPackage packages;
 in
 
-mapAttrs (name: lib.const (getAttr name snapshot)) project.packages
+mapAttrs (name: lib.const (getAttr name snapshot)) packages

@@ -2,24 +2,13 @@
 , overrides ? (_: _: {})
 , stackage ? (fetchGit { url = "https://github.com/typeable/nixpkgs-stackage"; rev = "6f7a24dbdb8086144cad7a55363e1ec04214b748"; }) }:
 
-with pkgs;
-
 let
-  yamlToJSON = path: runCommand "yaml.json" {} ''
-    ${yaml2json}/bin/yaml2json < ${path} > $out
-  '';
-
-  importYAML = path: lib.importJSON (yamlToJSON path);
-
-  toProject = spec: root:
-    { extra-deps = {}; } // spec // { inherit root; };
-
-  importStackProject = root:
-    toProject (importYAML "${root}/project.yaml") root;
+  lib = import ./lib.nix pkgs;
 
   buildProject = import ./build.nix {
-    inherit pkgs overrides stackage;
+    pkgs = pkgs // { lib = pkgs.lib // lib; };
+    inherit overrides stackage;
   };
 in
 
-root: buildProject (importStackProject root)
+root: buildProject (lib.importYAML "${root}/stack.yaml") root
