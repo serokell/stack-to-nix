@@ -2,7 +2,7 @@
 
 let
   inherit (pkgs.lib) optionalString;
-  inherit (import ../upstream.nix { inherit pkgs; }) callCabal2nix;
+  inherit (import ../to.nix pkgs) cabalToNix;
 in
 
 {
@@ -18,5 +18,5 @@ in
 
       subdir = optionalString (repo ? subdir) ''--subpath="${repo.subdir}"'';
     in
-    callCabal2nix self name src {} subdir;
+    cabalToNix self name src {} subdir;
 }

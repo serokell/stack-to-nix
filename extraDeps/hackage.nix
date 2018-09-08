@@ -1,7 +1,7 @@
 { pkgs }:
 
 let
-  inherit (import ../upstream.nix {inherit pkgs; }) callHackage;
+  inherit (import ../to.nix pkgs) callHackage;
 in
 
 {

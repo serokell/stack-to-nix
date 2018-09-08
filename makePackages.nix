@@ -7,7 +7,7 @@ let
   inherit (pkgs.haskell.lib) overrideCabal;
 
   inherit (import ./extraDeps { inherit pkgs; }) resolveExtraDep;
-  inherit (import ./upstream.nix { inherit pkgs; }) callCabal2nix;
+  inherit (import ./to.nix pkgs) cabalToNix;
 
   projPkgs = (import stackage) projPkgs pkgs;
 
@@ -38,7 +38,7 @@ let
 
   mkLocalPackage = name: path:
     let
-      drv = callCabal2nix stackagePackages name projectSrc {} ''--subpath="${path}"'';
+      drv = cabalToNix stackagePackages name projectSrc {} ''--subpath="${path}"'';
       cabalOverrides = {
         doCheck = true;
         doHaddock = true;
