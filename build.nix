@@ -37,8 +37,8 @@ let
     in
     handler.handle spec;
 
-  extraDeps = final: previous:
-    zipAttrs (map (spec: handleExtra spec final) (project.extra-deps or []));
+  extraDeps =
+    mergeExtensions (map (spec: final: _: handleExtra spec final) (project.extra-deps or []));
 
   overrideLocalPackage = name: path:
     let
