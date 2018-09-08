@@ -6,7 +6,7 @@ with lib;
 let
   inherit (haskell.lib) overrideCabal;
 
-  inherit (import ./extraDeps { inherit pkgs; }) resolveExtraDep;
+  inherit (import ./extra.nix pkgs) resolveExtra;
   inherit (import ./to.nix pkgs) cabalToNix;
 
   stackagePackages = (import stackage) stackagePackages pkgs;
@@ -35,7 +35,7 @@ let
   };
 
   extraDeps = final: previous:
-    mapAttrs (resolveExtraDep final previous) project.extra-deps;
+    mapAttrs (resolveExtra final previous) project.extra-deps;
 
   overrideLocalPackage = name: path:
     let
