@@ -7,11 +7,22 @@ let
   stripString = replaceStrings [" "] [""];
 
   pointAfter = prefix: default: list:
-    removePrefix prefix (findFirst (hasPrefix prefix) default list);
+    let
+      point = findFirst (hasPrefix prefix) null list;
+    in
+    if point == null then default else (removePrefix prefix point);
+
+  /* Like findFirst, but returns value from test function instead of the element. */
+  mapFirst = f: default: list:
+    let found = remove null (map f list);
+    in if found == [] then default else head found;
+
+  pointAfterOneOf = prefixes: default: list:
+    mapFirst (prefix: pointAfter prefix null list) default prefixes;
 
   cabalFileName = path:
     stripString
-      (pointAfter "name:"
+      (pointAfterOneOf [ "name:" "Name:" ]
         (throw "Cabal file doesn't contain name: ${path}")
         (splitString "\n" (builtins.readFile path)));
 
