@@ -14,7 +14,7 @@ let
     overrides = mergeExtensions [
       defaultDeps
       extraDeps
-      localPackages
+      localDeps
       overrides
     ];
   };
@@ -39,26 +39,32 @@ let
     in
     handler.handle spec;
 
-  extraDeps =
-    mergeExtensions (map (spec: final: _: handleExtra spec final) (project.extra-deps or []));
+  extraSpecs = (project.extra-deps or []) ++
+    map (spec: spec.location // spec)
+        (filter isAttrs project.packages);
 
-  overrideLocalPackage = name: path:
+  extraDeps =
+    mergeExtensions (map (spec: final: const (handleExtra spec final)) extraSpecs);
+
+  localPackage = name: path:
     let
       drv = cabalToNix snapshot name root {} ''--subpath="${path}"'';
-      overrides = _: {
+      overrides = const {
         doBenchmark = true;
         doCheck = true;
         doHaddock = true;
         license = licenses.free;
       };
     in
-    (overrideCabal drv overrides).overrideAttrs (lib.const { strictDeps = true; });
+    (overrideCabal drv overrides).overrideAttrs (const { strictDeps = true; });
 
-  packages = listToAttrs
-    (map (path: nameValuePair (cabalPackageName "${root}/${path}") path) project.packages);
+  localSpecs = filter isString project.packages;
 
-  localPackages = final: previous:
-    mapAttrs overrideLocalPackage packages;
+  localAttrs = listToAttrs
+    (map (path: nameValuePair (cabalPackageName "${root}/${path}") path) localSpecs);
+
+  localDeps = final: previous:
+    mapAttrs localPackage localAttrs;
 in
 
-mapAttrs (name: lib.const (getAttr name snapshot)) packages
+mapAttrs (name: const (getAttr name snapshot)) localAttrs
