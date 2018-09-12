@@ -12,7 +12,7 @@ let
 
   snapshot = stackagePackages.haskell.packages.stackage."${resolver}".override {
     overrides = mergeExtensions [
-      speedupDeps
+      defaultDeps
       extraDeps
       localPackages
       overrides
@@ -21,10 +21,13 @@ let
 
   inherit (snapshot) callHackage;
 
-  speedupDeps = final: previous: {
+  defaultDeps = final: previous: {
     mkDerivation = drv: previous.mkDerivation (drv // {
       doCheck = false;
       doHaddock = false;
+      enableDeadCodeElimination = true;
+      enableExecutableProfiling = false;
+      enableLibraryProfiling = false;
     });
   };
 
@@ -44,6 +47,7 @@ let
     let
       drv = cabalToNix snapshot name root {} ''--subpath="${path}"'';
       overrides = _: {
+        doBenchmark = true;
         doCheck = true;
         doHaddock = true;
         license = licenses.free;
