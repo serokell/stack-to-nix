@@ -23,9 +23,9 @@ let
 
   defaultDeps = final: previous: {
     mkDerivation = drv: previous.mkDerivation (drv // {
+      doBenchmark = false;
       doCheck = false;
       doHaddock = false;
-      enableDeadCodeElimination = true;
       enableExecutableProfiling = false;
       enableLibraryProfiling = false;
     });
