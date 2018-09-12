@@ -4,30 +4,17 @@ let
   inherit (haskell.lib) overrideCabal;
   inherit (haskellPackages) hackage2nix haskellSrc2nix hpack;
 
-  stripString = replaceStrings [" "] [""];
+  cabal-name = import (fetchGit {
+    url = https://github.com/serokell/cabal-name;
+    rev = "fa1471182c8afd4d6d382dd77b9c0247e3310090";
+  }) { inherit pkgs; };
 
-  pointAfter = prefix: default: list:
-    let
-      point = findFirst (hasPrefix prefix) null list;
-    in
-    if point == null then default else (removePrefix prefix point);
-
-  /* Like findFirst, but returns value from test function instead of the element. */
-  mapFirst = f: default: list:
-    let found = remove null (map f list);
-    in if found == [] then default else head found;
-
-  pointAfterOneOf = prefixes: default: list:
-    mapFirst (prefix: pointAfter prefix null list) default prefixes;
-
-  cabalFileName = path:
-    stripString
-      (pointAfterOneOf [ "name:" "Name:" ]
-        (throw "Cabal file doesn't contain name: ${path}")
-        (splitString "\n" (builtins.readFile path)));
+  cabalName = path: runCommand "cabal-name" {} ''
+    ${cabal-name}/bin/cabal-name ${path} > $out
+  '';
 
   hpackToCabal = path: runCommand "hpack.cabal" {} ''
-    cd ${dirOf path} && ${hpack}/bin/hpack - < ${path} > $out
+    cd ${dirOf path}; ${hpack}/bin/hpack - < ${path} > $out
   '';
 
   listDirectory = path:
@@ -47,7 +34,7 @@ in
       cabal = findSingle (hasSuffix ".cabal") (hpackToCabal hpack)
         (throw "more than one Cabal file: ${root}") children;
     in
-    cabalFileName cabal;
+    import (cabalName cabal);
 
   cabalToNix = self: name: src: args: options:
     let
