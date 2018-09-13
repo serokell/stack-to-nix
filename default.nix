@@ -1,6 +1,7 @@
 { pkgs ? import <nixpkgs> {}
-, overrides ? (_: _: {})
-, stackage ? (fetchGit { url = "https://github.com/typeable/nixpkgs-stackage"; rev = "7c94ec65e12850e7dd5282e83a6da91f88cb8857"; }) }:
+, stackage ? fetchGit { url = "https://github.com/typeable/nixpkgs-stackage"; rev = "7c94ec65e12850e7dd5282e83a6da91f88cb8857"; } }:
+
+{ src, overrides ? (_: _: {}) }:
 
 let
   lib = import ./lib.nix pkgs;
@@ -11,4 +12,4 @@ let
   };
 in
 
-root: buildProject (lib.importYAML "${root}/stack.yaml") root
+buildProject (lib.importYAML "${src}/stack.yaml") src
