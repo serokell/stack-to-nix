@@ -4,10 +4,7 @@ let
   inherit (haskell.lib) overrideCabal;
   inherit (haskellPackages) hackage2nix haskellSrc2nix hpack;
 
-  cabal-name = import (fetchGit {
-    url = https://github.com/serokell/cabal-name;
-    rev = "fa1471182c8afd4d6d382dd77b9c0247e3310090";
-  }) { inherit pkgs; };
+  cabal-name = import ./cabal-name { inherit pkgs; };
 
   cabalName = path: runCommand "cabal-name" {} ''
     ${cabal-name}/bin/cabal-name ${path} > $out
