@@ -1,4 +1,4 @@
-{ pkgs, overrides, stackage }: project: root:
+{ overrides, pkgs, shell, stackage }: project: root:
 
 with pkgs;
 with lib;
@@ -66,6 +66,26 @@ let
 
   localDeps = final: previous:
     mapAttrs localPackage localAttrs;
+
+  target = mapAttrs (name: const (getAttr name snapshot)) localAttrs;
+
+  localPaths = map (removePrefix "./") localSpecs;
+
+  cabalShell = snapshot.shellFor {
+    packages = const (attrValues target);
+    nativeBuildInputs = [ cabal-install ];
+
+    shellHook = ''
+      for f in $(find . -name package.yaml); do
+        ${snapshot.hpack}/bin/hpack $f
+      done
+
+      echo packages: > cabal.project
+      for spec in ${concatStringsSep " " localPaths}; do
+        echo "  $spec" >> cabal.project
+      done
+    '';
+  };
 in
 
-mapAttrs (name: const (getAttr name snapshot)) localAttrs
+if shell then cabalShell else target
