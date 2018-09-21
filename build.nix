@@ -8,9 +8,10 @@ let
 
   stackagePackages = (import stackage) stackagePackages pkgs;
 
-  resolver = replaceStrings ["."] [""] project.resolver;
+  resolverName = replaceStrings ["."] [""] project.resolver;
+  resolver = stackagePackages.haskell.packages.stackage."${resolverName}";
 
-  snapshot = stackagePackages.haskell.packages.stackage."${resolver}".override {
+  snapshot = resolver.override {
     overrides = mergeExtensions [
       defaultDeps
       extraDeps
