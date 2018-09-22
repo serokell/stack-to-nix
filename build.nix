@@ -67,13 +67,31 @@ let
 
   localPaths = map (removePrefix "./") project.packages;
 
-  cabalShell = snapshot.shellFor {
+  stackSnapshot = {
+    inherit (project) resolver;
+    name = "stack-to-nix";
+    packages = extraSpecs;
+  };
+
+  stackConfig = {
+    inherit (project) packages;
+    resolver = exportYAML stackSnapshot;
+  };
+
+  shellEnv = snapshot.shellFor {
     packages = const (attrValues target);
-    nativeBuildInputs = [ cabal-install ];
+    nativeBuildInputs = [ cabal-install stack ];
+
+    STACK_IN_NIX_SHELL = 1;
+    STACK_IN_NIX_EXTRA_ARGS = "";
+    STACK_PLATFORM_VARIANT = "nix";
+    STACK_YAML = "stack-to-nix.yaml";
 
     shellHook = ''
-      for f in $(find . -name package.yaml); do
-        ${snapshot.hpack}/bin/hpack $f
+      cat ${exportYAML stackConfig} > stack-to-nix.yaml
+
+      for f in $(find * -name package.yaml); do
+        ${snapshot.hpack}/bin/hpack --force $f
       done
 
       echo packages: > cabal.project
@@ -84,4 +102,4 @@ let
   };
 in
 
-if shell then cabalShell else target
+if shell then shellEnv else target

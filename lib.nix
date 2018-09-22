@@ -47,6 +47,8 @@ in
   callHackage = self: name: version:
     self.callPackage (hackage2nix name version);
 
+  exportYAML = term: writeText "term.yaml" (builtins.toJSON term);
+
   importYAML = path: lib.importJSON (yamlToJSON path);
 
   mergeExtensions = extensions: foldr composeExtensions (_: _: {}) extensions;
