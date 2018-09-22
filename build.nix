@@ -40,9 +40,7 @@ let
     in
     handler.handle spec;
 
-  extraSpecs = (project.extra-deps or []) ++
-    map (spec: spec.location // spec)
-        (filter isAttrs project.packages);
+  extraSpecs = project.extra-deps or [];
 
   extraDeps =
     mergeExtensions (map (spec: final: const (handleExtra spec final)) extraSpecs);
@@ -59,17 +57,15 @@ let
     in
     (overrideCabal drv overrides).overrideAttrs (const { strictDeps = true; });
 
-  localSpecs = filter isString project.packages;
-
   localAttrs = listToAttrs
-    (map (path: nameValuePair (cabalPackageName "${root}/${path}") path) localSpecs);
+    (map (path: nameValuePair (cabalPackageName "${root}/${path}") path) project.packages);
 
   localDeps = final: previous:
     mapAttrs localPackage localAttrs;
 
   target = mapAttrs (name: const (getAttr name snapshot)) localAttrs;
 
-  localPaths = map (removePrefix "./") localSpecs;
+  localPaths = map (removePrefix "./") project.packages;
 
   cabalShell = snapshot.shellFor {
     packages = const (attrValues target);
