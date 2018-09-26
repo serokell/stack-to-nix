@@ -69,13 +69,19 @@ let
 
   stackSnapshot = {
     inherit (project) resolver;
-    name = "stack-to-nix";
     packages = extraSpecs;
+  };
+
+  pathHash = path:
+    builtins.unsafeDiscardStringContext (builtins.substring 0 32 (baseNameOf path));
+
+  stackSnapshotWithName = stackSnapshot // {
+    name = pathHash (exportYAML stackSnapshot);
   };
 
   stackConfig = {
     inherit (project) packages;
-    resolver = exportYAML stackSnapshot;
+    resolver = exportYAML stackSnapshotWithName;
   };
 
   shellEnv = snapshot.shellFor {
