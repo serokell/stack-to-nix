@@ -45,7 +45,9 @@ let
   extraDeps =
     mergeExtensions (map (spec: final: const (handleExtra spec final)) extraSpecs);
 
-  localPackage = name: path:
+  withStrictDeps = drv: drv.overrideAttrs (const { strictDeps = true; });
+
+  localPackage = name: path: with haskell.lib;
     let
       drv = cabalToNix snapshot name root {} ''--subpath="${path}"'';
       overrides = const {
@@ -55,7 +57,7 @@ let
         license = licenses.free;
       };
     in
-    (overrideCabal drv overrides).overrideAttrs (const { strictDeps = true; });
+    withStrictDeps (failOnAllWarnings (overrideCabal drv overrides));
 
   localAttrs = listToAttrs
     (map (path: nameValuePair (cabalPackageName "${root}/${path}") path) project.packages);
