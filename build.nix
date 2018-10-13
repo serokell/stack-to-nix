@@ -47,7 +47,7 @@ let
 
   withStrictDeps = drv: drv.overrideAttrs (const { strictDeps = true; });
 
-  localPackage = name: path: with haskell.lib;
+  localPackage = name: path:
     let
       drv = cabalToNix snapshot name root {} ''--subpath="${path}"'';
       overrides = const {
@@ -57,7 +57,7 @@ let
         license = licenses.free;
       };
     in
-    withStrictDeps (failOnAllWarnings (overrideCabal drv overrides));
+    withStrictDeps (overrideCabal drv overrides);
 
   localAttrs = listToAttrs
     (map (path: nameValuePair (cabalPackageName "${root}/${path}") path) project.packages);
