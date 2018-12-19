@@ -10,7 +10,7 @@ Example
 ```nix
 { pkgs }:
 
-let stackToNix = pkgs.callPackage (fetchTarball https://github.com/serokell/stack-to-nix/master.tar.gz) { };
+let stackToNix = pkgs.callPackage (fetchTarball https://github.com/serokell/stack-to-nix/archive/master.tar.gz) { };
 in
 stackToNix {
   # root: the path with stack.yaml. you may want to filter this. for example using nix-gitignore.
@@ -26,3 +26,8 @@ stackToNix {
   };
 }
 ```
+
+Problems
+========
+
+This depends on https://github.com/NixOS/nix/pull/2409. It's in our patch set. `nix-env -f https://github.com/serokell/serokell-closure/archive/master.tar.gz -iA nix`
