@@ -60,14 +60,14 @@ let
     withStrictDeps (overrideCabal drv overrides);
 
   localAttrs = listToAttrs
-    (map (path: nameValuePair (cabalPackageName "${root}/${path}") path) project.packages);
+    (map (path: nameValuePair (cabalPackageName "${root}/${path}") path) (project.packages or ["."]));
 
   localDeps = final: previous:
     mapAttrs localPackage localAttrs;
 
   target = mapAttrs (name: const (getAttr name snapshot)) localAttrs;
 
-  localPaths = map (removePrefix "./") project.packages;
+  localPaths = map (removePrefix "./") (project.packages or ["."]);
 
   stackSnapshot = {
     inherit (project) resolver;
@@ -82,7 +82,7 @@ let
   };
 
   stackConfig = {
-    inherit (project) packages;
+    packages = project.packages or ["."];
     resolver = exportYAML stackSnapshotWithName;
   };
 
