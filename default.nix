@@ -3,7 +3,7 @@
 { overrides ? (_: _: {})
 , root
 , shell ? false
-, stackage ? fetchGit { url = "https://github.com/typeable/nixpkgs-stackage"; rev = "7c94ec65e12850e7dd5282e83a6da91f88cb8857"; } }:
+, stackage ? fetchGit { url = "https://github.com/typeable/nixpkgs-stackage"; rev = "6042df5e646d65b826add0a85d16304bee8e1dd5"; } }:
 
 let
   lib = import ./lib.nix pkgs;
