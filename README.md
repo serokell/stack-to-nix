@@ -4,8 +4,7 @@ stack-to-nix
 This is a handy nix function for building stack projects with nix, fully inside the nix sandbox.
 It parses the stack.yaml file and translates the dependencies into a series of fetchUrl, fetchGit calls.
 
-Example
-=======
+## Example
 
 ```nix
 { pkgs }:
@@ -28,9 +27,18 @@ stackToNix {
 }
 ```
 
-Problems
-========
+## Problems
 
 If you use this on a repo with git dependencies,
 you will need [NixOS/nix#2409](https://github.com/NixOS/nix/pull/2409). It's in our patch set. `nix-env -f https://github.com/serokell/serokell-closure/archive/master.tar.gz -iA nix`
 
+## About Serokell
+
+`stack-to-nix` is maintained and funded with :heart: by
+[Serokell](https://serokell.io/). The names and logo for Serokell are trademark
+of Serokell OÜ.
+
+We love open source software! See [our other
+projects](https://serokell.io/community?utm_source=github) or [hire
+us](https://serokell.io/hire-us?utm_source=github) to design, develop and grow
+your idea!
